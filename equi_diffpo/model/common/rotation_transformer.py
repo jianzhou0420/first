@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import functools
 
+
 class RotationTransformer:
     valid_reps = [
         'axis_angle',
@@ -13,11 +14,11 @@ class RotationTransformer:
         'matrix'
     ]
 
-    def __init__(self, 
-            from_rep='axis_angle', 
-            to_rep='rotation_6d', 
-            from_convention=None,
-            to_convention=None):
+    def __init__(self,
+                 from_rep='axis_angle',
+                 to_rep='rotation_6d',
+                 from_convention=None,
+                 to_convention=None):
         """
         Valid representations
 
@@ -40,8 +41,8 @@ class RotationTransformer:
                 getattr(pt, f'matrix_to_{from_rep}')
             ]
             if from_convention is not None:
-                funcs = [functools.partial(func, convention=from_convention) 
-                    for func in funcs]
+                funcs = [functools.partial(func, convention=from_convention)
+                         for func in funcs]
             forward_funcs.append(funcs[0])
             inverse_funcs.append(funcs[1])
 
@@ -51,13 +52,13 @@ class RotationTransformer:
                 getattr(pt, f'{to_rep}_to_matrix')
             ]
             if to_convention is not None:
-                funcs = [functools.partial(func, convention=to_convention) 
-                    for func in funcs]
+                funcs = [functools.partial(func, convention=to_convention)
+                         for func in funcs]
             forward_funcs.append(funcs[0])
             inverse_funcs.append(funcs[1])
-        
+
         inverse_funcs = inverse_funcs[::-1]
-        
+
         self.forward_funcs = forward_funcs
         self.inverse_funcs = inverse_funcs
 
@@ -73,20 +74,20 @@ class RotationTransformer:
         if isinstance(x, np.ndarray):
             y = x_.numpy()
         return y
-        
+
     def forward(self, x: Union[np.ndarray, torch.Tensor]
-        ) -> Union[np.ndarray, torch.Tensor]:
+                ) -> Union[np.ndarray, torch.Tensor]:
         return self._apply_funcs(x, self.forward_funcs)
-    
+
     def inverse(self, x: Union[np.ndarray, torch.Tensor]
-        ) -> Union[np.ndarray, torch.Tensor]:
+                ) -> Union[np.ndarray, torch.Tensor]:
         return self._apply_funcs(x, self.inverse_funcs)
 
 
 def test():
     tf = RotationTransformer()
 
-    rotvec = np.random.uniform(-2*np.pi,2*np.pi,size=(1000,3))
+    rotvec = np.random.uniform(-2 * np.pi, 2 * np.pi, size=(1000, 3))
     rot6d = tf.forward(rotvec)
     new_rotvec = tf.inverse(rot6d)
 
