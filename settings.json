@@ -1,0 +1,189 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8",
+    },
+    "autopep8.args": [
+        "--ignore=E501"
+    ],
+    "editor.fontLigatures": true,
+    "security.workspace.trust.untrustedFiles": "open",
+    "editor.matchBrackets": "always",
+    "editor.bracketPairColorization.enabled": false,
+    "terminal.integrated.fontFamily": "monospace",
+    "cmake.configureOnOpen": true,
+    "explorer.confirmDelete": false,
+    "explorer.confirmDragAndDrop": false,
+    "terminal.integrated.inheritEnv": false,
+    "editor.formatOnType": true,
+    "python.analysis.autoFormatStrings": true,
+    "editor.formatOnPaste": true,
+    "python.analysis.typeCheckingMode": "off",
+    "github.copilot.enable": {
+        "*": true,
+        "plaintext": false,
+        "markdown": false,
+        "scminput": false
+    },
+    "codesnap.containerPadding": "0em",
+    "codesnap.showWindowControls": false,
+    "todo-tree.filtering.excludeGlobs": [
+        "**/node_modules/*/**",
+        "**/__pycache__"
+    ],
+    "files.exclude": {
+        ".gitignore": true,
+        "**/__pycache__": true,
+        "**/*.egg-info": true,
+        "LICENSE": true
+    },
+    "editor.minimap.renderCharacters": false,
+    "terminal.integrated.enableMultiLinePasteWarning": false,
+    "interactiveWindow.executeWithShiftEnter": true,
+    "workbench.editorAssociations": {
+        "*.pdf": "pdf.preview",
+        "{git,gitlens}:/**/*.{md,csv,svg}": "default"
+    },
+    "remote.SSH.remotePlatform": {
+        "10.12.65.19": "linux"
+    },
+    "git.openRepositoryInParentFolders": "never",
+    "cmake.pinnedCommands": [
+        "workbench.action.tasks.configureTaskRunner",
+        "workbench.action.tasks.runTask"
+    ],
+    "explorer.confirmPasteNative": false,
+    "editor.wordWrapColumn": 500,
+    "editor.wordWrap": "wordWrapColumn",
+    "diffEditor.wordWrap": "on",
+    "editor.defaultFormatter": "ms-python.autopep8",
+    "jupyter.askForKernelRestart": false,
+    "python.createEnvironment.trigger": "off",
+    "C_Cpp.files.exclude": {
+        "**/.vscode": true,
+        "**/.vs": true
+    },
+    "git.autofetch": true,
+    "latex-workshop.latex.tools": [
+        {
+            "name": "latexmk",
+            "command": "latexmk",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-pdf",
+                "-outdir=%OUTDIR%",
+                "%DOC%"
+            ],
+            "env": {}
+        },
+        {
+            "name": "xelatex",
+            "command": "xelatex",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "%DOC%"
+            ],
+            "env": {}
+        },
+        {
+            "name": "pdflatex",
+            "command": "pdflatex",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "%DOC%"
+            ],
+            "env": {}
+        },
+        {
+            "name": "bibtex",
+            "command": "bibtex",
+            "args": [
+                "%DOCFILE%"
+            ],
+            "env": {}
+        }
+    ],
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "pdfLaTeX",
+            "tools": [
+                "pdflatex"
+            ]
+        },
+        {
+            "name": "latexmk 🔃",
+            "tools": [
+                "latexmk"
+            ]
+        },
+        {
+            "name": "xelatex",
+            "tools": [
+                "xelatex"
+            ]
+        },
+        {
+            "name": "pdflatex ➞ bibtex ➞ pdflatex`×2",
+            "tools": [
+                "pdflatex",
+                "bibtex",
+                "pdflatex",
+                "pdflatex"
+            ]
+        },
+        {
+            "name": "xelatex ➞ bibtex ➞ xelatex`×2",
+            "tools": [
+                "xelatex",
+                "bibtex",
+                "xelatex",
+                "xelatex"
+            ]
+        }
+    ],
+    "[latex]": {
+        "editor.defaultFormatter": "lenagain.latexindent"
+    },
+    "liveServer.settings.donotVerifyTags": true,
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "liveServer.settings.donotShowInfoMsg": true,
+    "git.confirmSync": false,
+    "python.analysis.stubPaths": [
+        "./stubs"
+    ],
+    "python.analysis.extraPaths": [
+        "c:\\\\Users\\\\jian\\\\Documents\\\\Unreal Projects\\\\MyProject\\\\Intermediate\\\\PythonStub"
+    ],
+    "editor.formatOnSave": true,
+    //颜色
+    "workbench.colorCustomizations": {
+        "editor.background": "#000000",
+        "editor.foreground": "#D4D4D4",
+        "activityBar.background": "#000000", // 活动栏背景色
+        "sideBar.background": "#000000", // 侧边栏背景色
+        "statusBar.background": "#000000", // 状态栏背景色
+        "titleBar.activeBackground": "#000000" // 标题栏背景色
+        // 根据需要添加或修改更多颜色项
+    },
+    "workbench.startupEditor": "none",
+    "editor.fontSize": 13,
+    "window.zoomLevel": 0.2,
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "editor.parameterHints.enabled": false,
+    "editor.hover.enabled": false,
+    "[shellscript]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+    "[properties]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+}

@@ -1,0 +1,6 @@
+env_name: Stack_D1
+robot: Panda
+controller: OSC_POSE
+has_renderer: true
+record_video: false
+has_offscreen_renderer: false

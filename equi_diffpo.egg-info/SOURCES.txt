@@ -1,0 +1,7 @@
+LICENSE
+README.md
+setup.py
+equi_diffpo.egg-info/PKG-INFO
+equi_diffpo.egg-info/SOURCES.txt
+equi_diffpo.egg-info/dependency_links.txt
+equi_diffpo.egg-info/top_level.txt
