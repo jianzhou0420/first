@@ -4,15 +4,15 @@ Training:
 python train.py --config-name=train_diffusion_lowdim_workspace
 """
 
+from equi_diffpo.workspace.base_workspace import BaseWorkspace
+import pathlib
+from omegaconf import OmegaConf
+import hydra
 import sys
 # use line-buffering for both stdout and stderr
 sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1)
 sys.stderr = open(sys.stderr.fileno(), mode='w', buffering=1)
 
-import hydra
-from omegaconf import OmegaConf
-import pathlib
-from equi_diffpo.workspace.base_workspace import BaseWorkspace
 
 max_steps = {
     'stack_d1': 400,
@@ -33,14 +33,17 @@ max_steps = {
     'square': 400,
 }
 
+
 def get_ws_x_center(task_name):
     if task_name.startswith('kitchen_') or task_name.startswith('hammer_cleanup_'):
         return -0.2
     else:
         return 0.
 
+
 def get_ws_y_center(task_name):
     return 0.
+
 
 OmegaConf.register_new_resolver("get_max_steps", lambda x: max_steps[x], replace=True)
 OmegaConf.register_new_resolver("get_ws_x_center", get_ws_x_center, replace=True)
@@ -49,10 +52,11 @@ OmegaConf.register_new_resolver("get_ws_y_center", get_ws_y_center, replace=True
 # allows arbitrary python code execution in configs using the ${eval:''} resolver
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 
+
 @hydra.main(
     version_base=None,
     config_path=str(pathlib.Path(__file__).parent.joinpath(
-        'equi_diffpo','config'))
+        'equi_diffpo', 'config'))
 )
 def main(cfg: OmegaConf):
     # resolve immediately so all the ${now:} resolvers
@@ -62,6 +66,7 @@ def main(cfg: OmegaConf):
     cls = hydra.utils.get_class(cfg._target_)
     workspace: BaseWorkspace = cls(cfg)
     workspace.run()
+
 
 if __name__ == "__main__":
     main()

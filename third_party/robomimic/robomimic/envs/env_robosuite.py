@@ -10,7 +10,7 @@ from copy import deepcopy
 import robosuite
 try:
     # this is needed for ensuring robosuite can find the additional mimicgen environments (see https://mimicgen.github.io)
-    import mimicgen_envs
+    import mimicgen
 except ImportError:
     pass
 
@@ -27,13 +27,14 @@ except ImportError:
 
 class EnvRobosuite(EB.EnvBase):
     """Wrapper class for robosuite environments (https://github.com/ARISE-Initiative/robosuite)"""
+
     def __init__(
-        self, 
-        env_name, 
-        render=False, 
-        render_offscreen=False, 
-        use_image_obs=False, 
-        postprocess_visual_obs=True, 
+        self,
+        env_name,
+        render=False,
+        render_offscreen=False,
+        use_image_obs=False,
+        postprocess_visual_obs=True,
         **kwargs,
     ):
         """
@@ -86,7 +87,7 @@ class EnvRobosuite(EB.EnvBase):
             # make sure gripper visualization is turned off (we almost always want this for learning)
             kwargs["gripper_visualization"] = False
             del kwargs["camera_depths"]
-            kwargs["camera_depth"] = False # rename kwarg
+            kwargs["camera_depth"] = False  # rename kwarg
 
         self._env_name = env_name
         self._init_kwargs = deepcopy(kwargs)
@@ -133,7 +134,7 @@ class EnvRobosuite(EB.EnvBase):
             state (dict): current simulator state that contains one or more of:
                 - states (np.ndarray): initial state of the mujoco environment
                 - model (str): mujoco scene xml
-        
+
         Returns:
             observation (dict): observation dictionary after setting the simulator state (only
                 if "states" is in @state)
@@ -226,8 +227,8 @@ class EnvRobosuite(EB.EnvBase):
         """
         Get current environment simulator state as a dictionary. Should be compatible with @reset_to.
         """
-        xml = self.env.sim.model.get_xml() # model xml file
-        state = np.array(self.env.sim.get_state().flatten()) # simulator state
+        xml = self.env.sim.model.get_xml()  # model xml file
+        state = np.array(self.env.sim.get_state().flatten())  # simulator state
         return dict(model=xml, states=state)
 
     def get_reward(self):
@@ -266,7 +267,7 @@ class EnvRobosuite(EB.EnvBase):
         if isinstance(succ, dict):
             assert "task" in succ
             return succ
-        return { "task" : succ }
+        return {"task": succ}
 
     @property
     def action_dimension(self):
@@ -312,12 +313,12 @@ class EnvRobosuite(EB.EnvBase):
 
     @classmethod
     def create_for_data_processing(
-        cls, 
-        env_name, 
-        camera_names, 
-        camera_height, 
-        camera_width, 
-        reward_shaping, 
+        cls,
+        env_name,
+        camera_names,
+        camera_height,
+        camera_width,
+        reward_shaping,
         **kwargs,
     ):
         """
@@ -363,7 +364,7 @@ class EnvRobosuite(EB.EnvBase):
             image_modalities = ["rgb"]
         obs_modality_specs = {
             "obs": {
-                "low_dim": [], # technically unused, so we don't have to specify all of them
+                "low_dim": [],  # technically unused, so we don't have to specify all of them
                 "rgb": image_modalities,
             }
         }
@@ -372,9 +373,9 @@ class EnvRobosuite(EB.EnvBase):
         # note that @postprocess_visual_obs is False since this env's images will be written to a dataset
         return cls(
             env_name=env_name,
-            render=False, 
-            render_offscreen=has_camera, 
-            use_image_obs=has_camera, 
+            render=False,
+            render_offscreen=has_camera,
+            use_image_obs=has_camera,
             postprocess_visual_obs=False,
             **kwargs,
         )

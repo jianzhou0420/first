@@ -3,7 +3,7 @@ from robosuite.controllers import load_controller_config
 from robosuite.utils.input_utils import *
 from zero.config.default import get_config
 import json
-import mimicgen_envs
+import mimicgen
 from robosuite.controllers import ALL_CONTROLLERS
 from copy import deepcopy, copy
 from codebase.z_utils.Rotation import euler2quat, quat2euler, quat2axisangle
@@ -12,7 +12,7 @@ from codebase.z_utils.Rotation import euler2quat, quat2euler, quat2axisangle
 np.set_printoptions(precision=4, suppress=True)
 if __name__ == "__main__":
     options = {}
-    eval_config = get_config('/media/jian/ssd4t/DP/equidiff/zero/config/online_eval.yaml')
+    eval_config = get_config('/media/jian/ssd4t/DP/first/zero/config/online_eval.yaml')
     print(eval_config)
 
     with open("mimicgen_env.json", "r") as f:
