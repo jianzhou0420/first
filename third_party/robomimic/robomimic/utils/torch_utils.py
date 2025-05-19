@@ -30,7 +30,7 @@ def hard_update(source, target):
         target (torch.nn.Module): target network to update parameters for
     """
     for target_param, param in zip(target.parameters(), source.parameters()):
-        target_param.copy_(param)
+            target_param.copy_(param)
 
 
 def get_torch_device(try_to_use_cuda):
@@ -46,7 +46,7 @@ def get_torch_device(try_to_use_cuda):
     """
     if try_to_use_cuda and torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
-        device = torch.device("cpu")
+        device = torch.device("cuda:0")
     else:
         device = torch.device("cpu")
     return device
@@ -144,7 +144,7 @@ def lr_scheduler_from_optim_params(net_optim_params, net, optimizer):
         if lr_scheduler_type == "linear":
             assert len(epoch_schedule) == 1
             end_epoch = epoch_schedule[0]
-
+            
             return optim.lr_scheduler.LinearLR(
                 optimizer,
                 start_factor=1.0,
@@ -159,7 +159,7 @@ def lr_scheduler_from_optim_params(net_optim_params, net, optimizer):
             )
         else:
             raise ValueError("Invalid LR scheduler type: {}".format(lr_scheduler_type))
-
+        
     return lr_scheduler
 
 
@@ -209,10 +209,8 @@ class dummy_context_mgr():
     A dummy context manager - useful for having conditional scopes (such
     as @maybe_no_grad). Nothing happens in this scope.
     """
-
     def __enter__(self):
         return None
-
     def __exit__(self, exc_type, exc_value, traceback):
         return False
 

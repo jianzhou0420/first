@@ -107,7 +107,7 @@ def simple_obs_example():
 
     # Send to GPU if applicable
     if torch.cuda.is_available():
-        inputs = TensorUtils.to_device(inputs, torch.device("cpu"))
+        inputs = TensorUtils.to_device(inputs, torch.device("cuda:0"))
         obs_encoder.cuda()
 
     # output from each obs key network is concatenated as a flat vector.

@@ -31,7 +31,7 @@ x = TensorUtils.to_tensor(x)
 x = TensorUtils.to_batch(x)
 
 # send all nested tensors to GPU (if available)
-x = TensorUtils.to_device(x, torch.device("cpu"))
+x = TensorUtils.to_device(x, torch.device("cuda:0"))
 ```
 
 The library also supports nontrivial shape operations on the nested dict. For example:
