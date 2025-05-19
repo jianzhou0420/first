@@ -44,7 +44,7 @@ val_dataloader:
   persistent_workers: True
 
 training:
-  device: "cuda:0"
+  device: "cpu"
   seed: 0
   debug: False
   resume: True

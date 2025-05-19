@@ -86,7 +86,7 @@ optimizer:
   betas: [0.9, 0.95]
 
 training:
-  device: "cuda:0"
+  device: "cpu"
   seed: 0
   debug: False
   resume: True
