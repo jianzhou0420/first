@@ -6,7 +6,7 @@ import json
 import mimicgen
 from robosuite.controllers import ALL_CONTROLLERS
 from copy import deepcopy, copy
-from codebase.z_utils.Rotation import euler2quat, quat2euler, quat2axisangle
+from codebase.z_utils.Rotation import *
 
 
 np.set_printoptions(precision=4, suppress=True)
@@ -40,24 +40,26 @@ if __name__ == "__main__":
         control_freq=20,
     )
 
-    env.reset()
+    obs = env.reset()
     env.viewer.set_camera(camera_id=0)
     low, high = env.action_spec
     # do visualization
     action_set = None
 
-    angle = np.radians(np.array([0, 0, -90]))
-    quat = quat2axisangle(euler2quat(angle))
-    action = np.array([0.1, 0.1, 1.3, quat[0], quat[1], quat[2], 1])
-    # action = np.array([0.1, 0.1, 1.3, 1, 0, 0, 40])
-    print("target_action", action)
     for i in range(10000):
-        obs, reward, done, _ = env.step(action)
+        PosEuler_offset_action2obs = np.array([0, 0, 0, 0, 0, 90])
         ee_pos = obs['robot0_eef_pos']
         ee_rot = obs['robot0_eef_quat']
-        ee_rot = np.array([ee_rot[0], ee_rot[1], ee_rot[2], ee_rot[3]])
-        ee_rot = np.degrees(quat2euler(ee_rot))
-        current_eePose = np.concatenate((ee_pos, ee_rot))
+        joint_pos_cos = obs['robot0_joint_pos_cos']
+        joint_pos_sin = obs['robot0_joint_pos_sin']
+        JP = np.arctan2(joint_pos_sin, joint_pos_cos)
 
-        print(action, current_eePose)
+        print("JP", JP)
+
+        ee_open = [1]
+
+        JP = np.concatenate((JP, ee_open), axis=-1)
+
+        obs, reward, done, _ = env.step(JP)
+
         env.render()

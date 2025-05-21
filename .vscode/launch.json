@@ -20,9 +20,9 @@
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
             "args": [
-                "--config-name=train_equi_diffusion_unet_abs",
+                "--config-name=train_diffusion_unet",
                 "task_name=stack_d1",
-                "n_demo=100"
+                "n_demo=10"
             ],
             "envFile": "${workspaceFolder}/.vscode/.env"
         },

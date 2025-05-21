@@ -2,7 +2,7 @@
 import open3d as o3d
 import math
 from copy import deepcopy as copy
-from codebase.z_utils.Rotation import euler2mat, RT2HT, HT2eePose, PosEuler2HT
+from codebase.z_utils.Rotation import euler2mat, RT2HT, HT2PosQuat, PosEuler2HT
 from math import cos, sin
 
 import numpy as np
@@ -65,7 +65,7 @@ class FrankaEmikaPanda():
 
         self.bbox_link_half = self.bbox_link[:, 1::2]
 
-        self.T_last2eePose = np.array([
+        self.T_last2PosQuat = np.array([
             [-0.7073, -0.7069, -0.0006, 0.0005],
             [0.7069, -0.7073, -0.0001, 0.0008],
             [-0.0004, -0.0005, 1.0000, 0.2174],
@@ -193,12 +193,12 @@ class FrankaEmikaPanda():
         bbox, _ = self.theta2obbox(theta)
         o3d.visualization.draw_geometries([pcd, *bbox], window_name="bbox", width=1920, height=1080)
 
-    def theta2eePose(self, theta):  # assume no open
+    def theta2PosQuat(self, theta):  # assume no open
         _, T_oi = self.get_T_oi(theta)
         T_oi_last = T_oi[-1]
-        T_eePose = T_oi_last @ self.T_last2eePose
-        eePose = HT2eePose(T_eePose)
-        return eePose
+        T_PosQuat = T_oi_last @ self.T_last2PosQuat
+        PosQuat = HT2PosQuat(T_PosQuat)
+        return PosQuat
 
     def set_T_base(self, T_base):
         self.T_base = copy(T_base)

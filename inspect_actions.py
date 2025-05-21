@@ -17,7 +17,7 @@ def show_trajectory(ee_pos, actions):
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
 
     # Plot each vector in its own subplot
-    axes[0].plot(x[:-1], ee_pos[1:, 0], marker='o', label='ee_pos')
+    axes[0].plot(x, ee_pos[:, 0], marker='o', label='ee_pos')
     axes[0].plot(x, actions[:, 0], marker='o', label='actions')
     axes[0].set_title('X')
     axes[0].set_xlabel('Index')
@@ -25,7 +25,7 @@ def show_trajectory(ee_pos, actions):
     axes[0].legend()
     axes[0].grid(True)
 
-    axes[1].plot(x[:-1], ee_pos[1:, 1], marker='o', label='ee_pos')
+    axes[1].plot(x, ee_pos[:, 1], marker='o', label='ee_pos')
     axes[1].plot(x, actions[:, 1], marker='o', label='actions')
     axes[1].set_title('Y')
     axes[1].set_xlabel('Index')
@@ -33,7 +33,7 @@ def show_trajectory(ee_pos, actions):
     axes[1].legend()
     axes[1].grid(True)
 
-    axes[2].plot(x[:-1], ee_pos[1:, 2], marker='o', label='ee_pos')
+    axes[2].plot(x, ee_pos[:, 2], marker='o', label='ee_pos')
     axes[2].plot(x, actions[:, 2], marker='o', label='actions')
     axes[2].set_title('Z')
     axes[2].set_xlabel('Index')
@@ -123,13 +123,12 @@ def verify_T_base_and_offset(eePose, JP):
 
 if __name__ == '__main__':
     # test1 = '/tmp/core_datasets/square/demo_src_square_task_D1/demo.hdf5'
-    test1 = 'data/robomimic/datasets/stack_d1/stack_d1_voxel_abs.hdf5'
+    test1 = '/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_voxel_abs_test.hdf5'
     # test1 = '/media/jian/ssd4t/equidiff/data/robomimic/datasets/stack_d1/stack_d1.hdf5'
     # test1 = '/media/jian/ssd4t/equidiff/data/robomimic/datasets/stack_d1/stack_d1_voxel.hdf5'
     np.set_printoptions(precision=3, suppress=True)
     with h5py.File(test1, 'r') as f:
         data = f['data']
-
         demo0 = data['demo_49']
         actions = demo0['actions'][...]
         obs_ = demo0["obs"]
@@ -138,10 +137,24 @@ if __name__ == '__main__':
         JP = obs_['robot0_joint_pos'][...]
 
         eePose = np.concatenate([ee_pos, ee_quat], axis=-1)
-        print(eePose[:10])
-        print(JP[:10])
-    '''
-    # show_trajectory(ee_pos, ee_quat, JP)
-    # find_out_T_base_and_offset(eePose, JP)
-    # verify_T_base_and_offset(eePose, JP)
-    '''
+        # print(eePose[:10])
+        # print(JP[:10])
+        '''
+        # show_trajectory(ee_pos, ee_quat, JP)
+        # find_out_T_base_and_offset(eePose, JP)
+        # verify_T_base_and_offset(eePose, JP)
+        '''
+
+        # 统一向前进一格，第一格舍弃，最后一格用action补上。
+        actions_eePose = eePose.copy()[1:]
+        # 最后一格
+        action_last = actions[-1, :]
+        action_last_pos = action_last[:3]
+        action_last_rot = axisangle2quat(action_last[:3])
+        action_last = np.concatenate([action_last_pos, action_last_rot])
+
+        actions_eePose = np.concatenate([actions_eePose, action_last[None, :]], axis=0)
+
+        print('actions_eePose', actions_eePose[:10])
+        print('eePose', eePose[:10])
+        show_trajectory(ee_pos, actions_eePose)

@@ -27,9 +27,15 @@ spec:
           command: ["/bin/bash", "-c"]
           args: 
               - |
-                cd /data/zero
+                cd /workspace/first
+                # source activate
+                # conda activate equidiff
+                export HYDRA_FULL_ERROR=1
                 nvidia-smi
+                python -c "import torch; print(torch.version.cuda) "
+                export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin 
                 python -c "import torch; print(torch.cuda.is_available())"
+ 
 
 
           resources:

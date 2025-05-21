@@ -18,7 +18,7 @@ dataset_obs_steps: ${n_obs_steps}
 past_action_visible: False
 obs_as_global_cond: True
 dataset: equi_diffpo.dataset.robomimic_replay_image_dataset.RobomimicReplayImageDataset
-dataset_path: data/robomimic/datasets/${task_name}/${task_name}_abs.hdf5
+dataset_path: data/robomimic/datasets/${task_name}/${task_name}_abs_test.hdf5
 
 policy:
   _target_: equi_diffpo.policy.diffusion_unet_hybrid_image_policy.DiffusionUnetHybridImagePolicy
@@ -63,14 +63,14 @@ ema:
   max_value: 0.9999
 
 dataloader:
-  batch_size: 2
+  batch_size: 64
   num_workers: 4
   shuffle: True
   pin_memory: True
   persistent_workers: True
 
 val_dataloader:
-  batch_size: 2
+  batch_size: 64
   num_workers: 4
   shuffle: False
   pin_memory: True
