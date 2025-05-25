@@ -10,4 +10,4 @@ python equi_diffpo/scripts/robomimic_dataset_conversion.py -i data/robomimic/dat
 
 # train
 
-python train.py --config-name=train_diffusion_unet_test1 task_name=stack_d1 n_demo=100
+python train.py --config-name=train_diffusion_unet_JP task_name=stack_d1 n_demo=100

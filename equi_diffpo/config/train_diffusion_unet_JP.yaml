@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - task: mimicgen_abs
+  - task: mimicgen_abs_JP
 
 name: diff_c
 _target_: equi_diffpo.workspace.train_diffusion_unet_hybrid_workspace.TrainDiffusionUnetHybridWorkspace
@@ -17,8 +17,8 @@ n_latency_steps: 0
 dataset_obs_steps: ${n_obs_steps}
 past_action_visible: False
 obs_as_global_cond: True
-dataset: equi_diffpo.dataset.robomimic_replay_image_dataset.RobomimicReplayImageDataset
-dataset_path: data/robomimic/datasets/${task_name}/${task_name}_abs_test.hdf5
+dataset: equi_diffpo.dataset.robomimic_replay_image_dataset_JP.RobomimicReplayImageDataset_JP
+dataset_path: data/robomimic/datasets/${task_name}/${task_name}_abs_JP.hdf5
 
 policy:
   _target_: equi_diffpo.policy.diffusion_unet_hybrid_image_policy.DiffusionUnetHybridImagePolicy
@@ -91,7 +91,7 @@ training:
   # optimization
   lr_scheduler: cosine
   lr_warmup_steps: 500
-  num_epochs: ${eval:'50000 / ${n_demo}'}
+  num_epochs: ${eval:'100000 / ${n_demo}'}
   gradient_accumulate_every: 1
   # EMA destroys performance when used with BatchNorm
   # replace BatchNorm with GroupNorm.

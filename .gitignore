@@ -31,3 +31,5 @@ dist/
 
 # debug outpus
 *.pkl
+
+*.mp4

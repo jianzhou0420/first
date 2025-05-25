@@ -84,8 +84,6 @@ class RobomimicImageRunner(BaseImageRunner):
         rotation_transformer = None
         if abs_action:
             env_meta['env_kwargs']['controller_configs']['control_delta'] = False
-            rotation_transformer = RotationTransformer('axis_angle', 'rotation_6d')
-            env_meta['env_kwargs']['controller_configs']['type'] = "JOINT_POSITION"
 
         def env_fn():
             robomimic_env = create_env(
@@ -291,6 +289,9 @@ class RobomimicImageRunner(BaseImageRunner):
                                       lambda x: torch.from_numpy(x).to(
                                           device=device))
 
+                if 'robot0_joint_pos' in obs_dict:
+                    del obs_dict['robot0_joint_pos']
+
                 # run policy
                 with torch.no_grad():
                     action_dict = policy.predict_action(obs_dict)
@@ -356,24 +357,3 @@ class RobomimicImageRunner(BaseImageRunner):
             log_data[prefix + 'max_score'] = self.max_rewards[prefix]
 
         return log_data
-
-    def undo_transform_action(self, action):
-        raw_shape = action.shape
-        if raw_shape[-1] == 20:
-            # dual arm
-            action = action.reshape(-1, 2, 10)
-
-        d_rot = action.shape[-1] - 4
-        pos = action[..., :3]
-        rot = action[..., 3:3 + d_rot]
-        gripper = action[..., [-1]]
-        rot = self.rotation_transformer.inverse(rot)
-        uaction = np.concatenate([
-            pos, rot, gripper
-        ], axis=-1)
-
-        if raw_shape[-1] == 20:
-            # dual arm
-            uaction = uaction.reshape(*raw_shape[:-1], 14)
-
-        return uaction

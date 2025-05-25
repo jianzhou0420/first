@@ -84,7 +84,7 @@ class RobomimicImageRunner(BaseImageRunner):
         rotation_transformer = None
         if abs_action:
             env_meta['env_kwargs']['controller_configs']['control_delta'] = False
-            env_meta['env_kwargs']['controller_configs']['type'] = "JOINT_POSITION"
+            rotation_transformer = RotationTransformer('axis_angle', 'rotation_6d')
 
         def env_fn():
             robomimic_env = create_env(
@@ -357,11 +357,22 @@ class RobomimicImageRunner(BaseImageRunner):
         return log_data
 
     def undo_transform_action(self, action):
-        pass
-        return 1
+        raw_shape = action.shape
+        if raw_shape[-1] == 20:
+            # dual arm
+            action = action.reshape(-1, 2, 10)
 
-    def delta_to_abs_action(self, action, current_action):
-        pass
+        d_rot = action.shape[-1] - 4
+        pos = action[..., :3]
+        rot = action[..., 3:3 + d_rot]
+        gripper = action[..., [-1]]
+        rot = self.rotation_transformer.inverse(rot)
+        uaction = np.concatenate([
+            pos, rot, gripper
+        ], axis=-1)
 
-    def action_to_delta_action(self, action, current_action):
-        pass
+        if raw_shape[-1] == 20:
+            # dual arm
+            uaction = uaction.reshape(*raw_shape[:-1], 14)
+
+        return uaction

@@ -1,3 +1,4 @@
+from copy import deepcopy
 import open3d as o3d
 import matplotlib.pyplot as plt
 import h5py
@@ -45,6 +46,24 @@ def show_trajectory(ee_pos, actions):
     plt.show()
 
 
+def compare_two_trajectories(action0, action1):
+    x = list(range(len(action0)))  # assumes all vectors have the same length
+    B, D = action0.shape
+    assert action1.shape == (B, D), f"action1 shape {action1.shape} does not match action0 shape {action0.shape}"
+
+    fig, axes = plt.subplots(1, D, figsize=(12, 4))
+    for i in range(D):
+        axes[i].plot(x, action0[:, i], marker='o', label='action0')
+        axes[i].plot(x, action1[:, i], marker='o', label='action1')
+        axes[i].set_title(f'Action Dimension {i}')
+        axes[i].set_xlabel('Index')
+        axes[i].set_ylabel('Value')
+        axes[i].legend()
+        axes[i].grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
 def find_out_T_base_and_offset(eePose, JP):
     franka = FrankaEmikaPanda()
     from numpy.linalg import inv
@@ -60,14 +79,14 @@ def find_out_T_base_and_offset(eePose, JP):
         world_origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1)
         eePose_mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1)
 
-        T_eePose_sim = eePose2HT(eePose[i])
+        T_eePose_sim = PosQuat2HT(eePose[i])
         eePose_mesh.transform(T_eePose_sim)
 
         # o3d.visualization.draw_geometries([*bbox, *other_bbox, world_origin, eePose_mesh], window_name="bbox", width=1920, height=1080)
 
         eePose_base = franka.theta2eePose(JP[i])
 
-        T_eePose_base = eePose2HT(eePose_base)
+        T_eePose_base = PosQuat2HT(eePose_base)
 
         T_offset = np.identity(4)
         rot_euler = np.array([0, 0, -180])
@@ -108,8 +127,8 @@ def verify_T_base_and_offset(eePose, JP):
         obbox, other_bbox = franka.get_obbox(T_ok, T_ok_others=T_ok_others, tolerance=0.005)
 
         eePose_franka = franka.theta2eePose(JP[i])
-        T_eePose_franka = eePose2HT(eePose_franka) @ T_offset
-        T_eePose_sim = eePose2HT(eePose[i])
+        T_eePose_franka = PosQuat2HT(eePose_franka) @ T_offset
+        T_eePose_sim = PosQuat2HT(eePose[i])
 
         world_origin_o3dframe = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1)
         eePose_sim_o3dframe = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.1)
@@ -121,13 +140,12 @@ def verify_T_base_and_offset(eePose, JP):
         o3d.visualization.draw_geometries([*obbox, *other_bbox, world_origin_o3dframe, eePose_sim_o3dframe, eePose_franka_03dframe], window_name="bbox", width=1920, height=1080)
 
 
-if __name__ == '__main__':
+def show_eePose_action_with_obs(path):
     # test1 = '/tmp/core_datasets/square/demo_src_square_task_D1/demo.hdf5'
-    test1 = '/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_voxel_abs_test.hdf5'
     # test1 = '/media/jian/ssd4t/equidiff/data/robomimic/datasets/stack_d1/stack_d1.hdf5'
     # test1 = '/media/jian/ssd4t/equidiff/data/robomimic/datasets/stack_d1/stack_d1_voxel.hdf5'
     np.set_printoptions(precision=3, suppress=True)
-    with h5py.File(test1, 'r') as f:
+    with h5py.File(path, 'r') as f:
         data = f['data']
         demo0 = data['demo_49']
         actions = demo0['actions'][...]
@@ -150,7 +168,7 @@ if __name__ == '__main__':
         # 最后一格
         action_last = actions[-1, :]
         action_last_pos = action_last[:3]
-        action_last_rot = axisangle2quat(action_last[:3])
+        action_last_rot = axis2quat(action_last[:3])
         action_last = np.concatenate([action_last_pos, action_last_rot])
 
         actions_eePose = np.concatenate([actions_eePose, action_last[None, :]], axis=0)
@@ -158,3 +176,49 @@ if __name__ == '__main__':
         print('actions_eePose', actions_eePose[:10])
         print('eePose', eePose[:10])
         show_trajectory(ee_pos, actions_eePose)
+
+
+def validate_JP_actions(path):
+    franka = FrankaEmikaPanda()
+    with h5py.File(path, 'r') as f:
+        demo0 = f['data/demo_0']
+        actions = deepcopy(demo0['actions'][...])
+        JP_actions = actions[:, :-1]
+        JP_obs = deepcopy(demo0['obs']['robot0_joint_pos'][...])
+        pos_ee = deepcopy(demo0['obs']['robot0_eef_pos'][...])
+        quat_ee = deepcopy(demo0['obs']['robot0_eef_quat'][...])
+
+        eePose_obs = np.concatenate([pos_ee, quat_ee], axis=-1)
+        T_base_mimicgen = np.array([[1., 0, 0, -0.561],
+                                    [0, 1., 0., 0],
+                                    [0, 0., 1., 0.925],
+                                    [0., 0., 0., 1.]])
+
+        T_offset = np.array([[-1, 0, 0., 0],
+                             [0, -1., 0., 0],
+                             [0, 0, 1., 0],
+                             [0, 0, 0., 1.]])
+
+        franka.set_T_base(T_base_mimicgen)
+
+        eePose_franka = []
+
+        for i in range(JP_actions.shape[0]):
+            theta = JP_actions[i]
+            if len(theta) == 7:
+                theta = np.hstack([theta, 1])
+            eePose_JP_actions = franka.theta2PosQuat(theta).squeeze()
+            T_JP_actions = PosQuat2HT(eePose_JP_actions) @ T_offset
+
+            eePose_JP_actions = HT2PosQuat(T_JP_actions)
+            eePose_franka.append(eePose_JP_actions)
+
+        eePose_franka = np.array(eePose_franka)
+        compare_two_trajectories(eePose_obs, eePose_franka)
+
+
+if __name__ == '__main__':
+    # show_eePose_action_with_obs('/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_voxel_abs_test.hdf5')
+    # validate_JP_actions('/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5')
+
+    pass

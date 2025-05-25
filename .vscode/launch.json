@@ -26,5 +26,21 @@
             ],
             "envFile": "${workspaceFolder}/.vscode/.env"
         },
+        {
+            "name": "OnlineEval",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/pg_online_evaluator.py",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.vscode/.env"
+        },
+        {
+            "name": "TestEnvRunner",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/pg_test_env_runner.py",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.vscode/.env"
+        }
     ]
 }

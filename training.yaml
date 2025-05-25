@@ -28,8 +28,8 @@ spec:
           args: 
               - |
                 cd /workspace/first
-                # source activate
-                # conda activate equidiff
+                eval "$(mamba shell hook --shell bash)"
+                mamba activate equidiff
                 export HYDRA_FULL_ERROR=1
                 nvidia-smi
                 python -c "import torch; print(torch.version.cuda) "

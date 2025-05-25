@@ -178,8 +178,7 @@ class JointPositionController(Controller):
         """
         # Update state
         self.update()
-        self.goal_qpos = action
-        return
+
         # Parse action based on the impedance mode, and update kp / kd as necessary
         jnt_dim = len(self.qpos_index)
         if self.impedance_mode == "variable":

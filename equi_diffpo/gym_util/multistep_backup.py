@@ -3,7 +3,6 @@ from gym import spaces
 import numpy as np
 from collections import defaultdict, deque
 import dill
-from codebase.z_utils.Rotation import *
 
 
 def stack_repeated(x, n):
@@ -111,22 +110,6 @@ class MultiStepWrapper(gym.Wrapper):
         actions: (n_action_steps,) + action_shape
         """
         for act in action:
-            # Jian:Code insertion
-
-            # # 根据len action判断是eepose还是jp
-            # if len(act) == 8:  # JP
-            #     obs_last = self._get_obs(n_steps=1)
-            #     JP_obs = obs_last['robot0_joint_pos'][0]
-            #     JP_act = act[:7]
-            #     Open_act = act[7:8]
-            #     JP_delta = JP_act - JP_obs
-            #     act = np.concatenate((JP_delta, Open_act), axis=-1)
-            # elif len(act) == 7:  # eePose
-            #     # print('using eePose')
-            #     pass
-
-            # /jian
-
             if len(self.done) > 0 and self.done[-1]:
                 # termination
                 break

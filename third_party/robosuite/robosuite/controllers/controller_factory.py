@@ -12,7 +12,6 @@ from .joint_pos import JointPositionController
 from .joint_tor import JointTorqueController
 from .joint_vel import JointVelocityController
 from .osc import OperationalSpaceController
-
 # Global var for linking pybullet server to multiple ik controller instances if necessary
 pybullet_server = None
 
