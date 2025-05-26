@@ -1,0 +1,30 @@
+# 1. 选一个官方的 Mambaforge 镜像（内置 mamba，比 conda solver 快）
+FROM nvidia/cuda:11.8.0-runtime-ubuntu20.04
+
+# 2. 安装你需要的系统依赖（如果有）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential &&
+    rm -rf /var/lib/apt/lists/*
+
+# 3. 把 environment.yml 拷进去，一次性搞定所有包
+COPY environment.yml /tmp/environment.yml
+
+# 4. 利用 mamba 创建环境，并清理缓存
+RUN mamba env create -f /tmp/environment.yml &&
+    mamba clean --all --yes &&
+    rm /tmp/environment.yml
+
+# 5. 确保每次启动都能激活 env：
+#    - 用 bash -lc 可以加载 /etc/profile.d/conda.sh
+#    - 把默认 shell 改成 login shell
+SHELL ["/bin/bash", "-lc"]
+
+# 6. 把 conda env 加到 PATH
+ENV CONDA_ENV_NAME=myenv
+ENV PATH=/opt/conda/envs/${CONDA_ENV_NAME}/bin:$PATH
+
+WORKDIR /workspace
+COPY . .
+
+# 7. 最后用这个 entrypoint，脚本里直接就能用到激活的环境
+ENTRYPOINT ["bash", "-lc", "conda activate myenv && exec python train.py"]

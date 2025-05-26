@@ -10,42 +10,6 @@ from zero.FrankaPandaFK import FrankaEmikaPanda
 import torch
 
 
-def show_trajectory(ee_pos, actions):
-    # X axis = list indices
-    x = list(range(len(ee_pos)))  # assumes all vectors have the same length
-
-    # Plotting
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4))
-
-    # Plot each vector in its own subplot
-    axes[0].plot(x, ee_pos[:, 0], marker='o', label='ee_pos')
-    axes[0].plot(x, actions[:, 0], marker='o', label='actions')
-    axes[0].set_title('X')
-    axes[0].set_xlabel('Index')
-    axes[0].set_ylabel('Value')
-    axes[0].legend()
-    axes[0].grid(True)
-
-    axes[1].plot(x, ee_pos[:, 1], marker='o', label='ee_pos')
-    axes[1].plot(x, actions[:, 1], marker='o', label='actions')
-    axes[1].set_title('Y')
-    axes[1].set_xlabel('Index')
-    axes[1].set_ylabel('Value')
-    axes[1].legend()
-    axes[1].grid(True)
-
-    axes[2].plot(x, ee_pos[:, 2], marker='o', label='ee_pos')
-    axes[2].plot(x, actions[:, 2], marker='o', label='actions')
-    axes[2].set_title('Z')
-    axes[2].set_xlabel('Index')
-    axes[2].set_ylabel('Value')
-    axes[2].legend()
-    axes[2].grid(True)
-
-    plt.tight_layout()
-    plt.show()
-
-
 def compare_two_trajectories(action0, action1):
     x = list(range(len(action0)))  # assumes all vectors have the same length
     B, D = action0.shape
@@ -175,7 +139,6 @@ def show_eePose_action_with_obs(path):
 
         print('actions_eePose', actions_eePose[:10])
         print('eePose', eePose[:10])
-        show_trajectory(ee_pos, actions_eePose)
 
 
 def validate_JP_actions(path):

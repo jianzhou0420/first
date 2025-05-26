@@ -13,42 +13,6 @@ import json
 from termcolor import cprint
 
 
-def show_trajectory(ee_pos, actions):  # TODO:refine it
-    # X axis = list indices
-    x = list(range(len(ee_pos)))  # assumes all vectors have the same length
-
-    # Plotting
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4))
-
-    # Plot each vector in its own subplot
-    axes[0].plot(x, ee_pos[:, 0], marker='o', label='ee_pos')
-    axes[0].plot(x, actions[:, 0], marker='o', label='actions')
-    axes[0].set_title('X')
-    axes[0].set_xlabel('Index')
-    axes[0].set_ylabel('Value')
-    axes[0].legend()
-    axes[0].grid(True)
-
-    axes[1].plot(x, ee_pos[:, 1], marker='o', label='ee_pos')
-    axes[1].plot(x, actions[:, 1], marker='o', label='actions')
-    axes[1].set_title('Y')
-    axes[1].set_xlabel('Index')
-    axes[1].set_ylabel('Value')
-    axes[1].legend()
-    axes[1].grid(True)
-
-    axes[2].plot(x, ee_pos[:, 2], marker='o', label='ee_pos')
-    axes[2].plot(x, actions[:, 2], marker='o', label='actions')
-    axes[2].set_title('Z')
-    axes[2].set_xlabel('Index')
-    axes[2].set_ylabel('Value')
-    axes[2].legend()
-    axes[2].grid(True)
-
-    plt.tight_layout()
-    plt.show()
-
-
 def copy2new_h5py_file(src_path, dst_path):
     with h5py.File(src_path, 'r') as src, h5py.File(dst_path, 'w') as dst:
         for name in src:

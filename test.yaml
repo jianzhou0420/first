@@ -20,21 +20,22 @@ spec:
 
       containers:
         - name: zero-container # It is recommended to name your container according to the project
-          image: docker.aiml.team/jian.zhou/mimicgen:latest # You can reuse this image for different projects if their python dependencies are the same.
+          image: docker.aiml.team/jian.zhou/mimicgen:test # You can reuse this image for different projects if their python dependencies are the same.
           imagePullPolicy: Always
           stdin: true
           tty: true
           command: ["/bin/bash", "-c"]
           args: 
               - |
-                cd /workspace/first
-                eval "$(mamba shell hook --shell bash)"
-                mamba activate equidiff
-                export HYDRA_FULL_ERROR=1
-                nvidia-smi
-                python -c "import torch; print(torch.version.cuda) "
-                export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin 
+                export PATH=/opt/conda/bin:$PATH
+                source /opt/conda/etc/profile.d/conda.sh
+
+                conda activate base
+
+                which python
+                python -c "import torch; print(torch.version.cuda)"
                 python -c "import torch; print(torch.cuda.is_available())"
+                nvidia-smi
  
 
 
