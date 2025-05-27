@@ -21,7 +21,9 @@ shape_meta: &shape_meta
       shape: [2]
       # type default: low_dim
   action: 
-    shape: [8]
+    shape: [8] # 7+1,JP+open
+  x0loss:
+    shape: [8] # 3+4+1, pos+quat+open
 
 
 

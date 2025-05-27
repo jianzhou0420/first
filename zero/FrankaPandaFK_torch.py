@@ -184,6 +184,16 @@ class FrankaEmikaPanda_torch(nn.Module):
         T_eePose = T_oi_last @ T_last2eePose
         return T_eePose
 
+    def set_T_base(self, T_base):
+        """
+        Set the base transformation matrix.
+        :param T_base: The base transformation matrix.
+        """
+        self.T_base = tensorfp32(T_base)
+
+    def verify_data_integrity(self, eePose, JP):
+        return NotImplementedError
+
 
 if __name__ == "__main__":
     def test():

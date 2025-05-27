@@ -1,3 +1,4 @@
+from tqdm import tqdm
 from copy import deepcopy
 import open3d as o3d
 import matplotlib.pyplot as plt
@@ -6,7 +7,7 @@ import h5py
 import numpy as np
 from codebase.z_utils.Rotation import *
 from zero.FrankaPandaFK import FrankaEmikaPanda
-from zero.utils.h5_utils import HDF5Inspector
+from zero.z_utils.h5_utils import HDF5Inspector
 import torch
 
 import json
@@ -34,7 +35,6 @@ def convert_action_to_traj(new_h5py_file):
         for i, key in enumerate(data.keys()):
             # 1. get a numpy copy of the dataset
             demo_data = data[key]
-            print(data['demo_0'].keys())  # <KeysViewHDF5 ['actions', 'dones', 'obs', 'rewards', 'states']>
 
             PosAxisOpen_old = deepcopy(demo_data['actions'][...])  # PosAxis
             robot_ee_pos = deepcopy(demo_data['obs']['robot0_eef_pos'][...])
@@ -159,16 +159,36 @@ def show_single_traj_from_h5py(path):
     pass
 
 
+def add_x0loss_eePose(new_h5py_file):
+    with h5py.File(new_h5py_file, 'r+') as f:
+        data = f['data']
+        for i, key in tqdm(enumerate(data.keys())):
+            demo_i_group = data[key]
+            ee_pos = deepcopy(demo_i_group['obs']['robot0_eef_pos'][...])
+            ee_quat = deepcopy(demo_i_group['obs']['robot0_eef_quat'][...])
+            open_ = deepcopy(demo_i_group['actions'][..., -1:])
+
+            eePose = np.concatenate((ee_pos, ee_quat), axis=-1)
+            eePose = np.concatenate((eePose[1:, :], eePose[-1:, :]), axis=0)
+            eePose_with_open = np.concatenate((eePose, open_), axis=-1)
+
+            x0loss_group = demo_i_group.require_group('x0loss')
+            x0loss_group.create_dataset('eePose', data=eePose_with_open, dtype='f')
+
+
+def inspect_h5py_file(path):
+    HDF5Inspector.inspect_hdf5(path)
+
+
+def create_x0loss_from_JP(src: str):
+    dst = src.replace('.hdf5', '_x0loss.hdf5')
+    copy2new_h5py_file(src, dst)
+    add_x0loss_eePose(dst)
+
+
 def workspace():
-    # DataseteePose2JP('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
-    # changeData2JP('/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5')
-    # show_single_traj_from_h5py('data/robomimic/datasets/stack_d1/stack_d1_abs_test.hdf5')
-    pass
-    franka = FrankaEmikaPanda()
-    with h5py.File('data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5', 'r') as f:
-        demo0_data = f['data/demo_0']
-        actions = deepcopy(demo0_data['actions'][...])
-        ee_pos = deepcopy(demo0_data['obs']['robot0_eef_pos'][...])
+    create_x0loss_from_JP(
+        "/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5")
 
 
 if __name__ == '__main__':
