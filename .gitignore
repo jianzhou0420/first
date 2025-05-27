@@ -33,3 +33,7 @@ dist/
 *.pkl
 
 *.mp4
+__pycache__/
+__pycache__/
+*.py[cod]
+*.class
