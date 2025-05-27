@@ -20,7 +20,7 @@
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
             "args": [
-                "--config-name=train_diffusion_unet",
+                "--config-name=train_diffusion_unet_JP_x0loss",
                 "task_name=stack_d1",
                 "n_demo=10"
             ],

@@ -29,6 +29,9 @@ from equi_diffpo.model.vision.rot_randomizer import RotRandomizer
 from zero.z_utils.coding import extract
 from copy import deepcopy
 
+from codebase.z_utils.Rotation_torch import PosEuler2HT, HT2eePose
+from codebase.z_utils.Rotation_torch import matrix_to_rotation_6d, eePose2HT
+
 
 class DiffusionUnetHybridImagePolicyX0loss(BaseImagePolicy):
     def __init__(self,
@@ -305,7 +308,7 @@ class DiffusionUnetHybridImagePolicyX0loss(BaseImagePolicy):
         assert 'valid_mask' not in batch
 
         # x0loss
-        eePose_GT = deepcopy(batch['x0loss']['eePose'])
+        eePose_GT = deepcopy(batch['x0loss'])
 
         nobs = self.normalizer.normalize(batch['obs'])
         nactions = self.normalizer['action'].normalize(batch['action'])
@@ -372,7 +375,7 @@ class DiffusionUnetHybridImagePolicyX0loss(BaseImagePolicy):
         x0Loss = self.loss_plugin.eePoseMseLoss(x_t=noisy_trajectory,
                                                 t=timesteps,
                                                 noise=pred,
-                                                eePose_GT=eePose_GT,
+                                                eePose_GT_with_open=eePose_GT,
                                                 normalizer=self.normalizer
                                                 )
 
@@ -412,15 +415,22 @@ class X0LossPlugin(nn.Module):  # No trainable parameters, inherit from nn.Modul
         rb('coeff2', self.coeff1 * (1. - alphas) / torch.sqrt(1. - alphas_bar))
 
         # D-H Parameters
-        self.franka = FrankaEmikaPanda_torch()
-        self.franka.set_T_base()
-        lower = [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973, 0],
-        upper = [2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973, 1]
+        PosEuler_base_mimicgen = torch.tensor([-0.561, 0., 0.925, 0., 0., 0.], device='cuda')
+        PosEuler_offset = torch.tensor([0., 0., 0., 0., 0., - 180.], device='cuda')
+        T_base_mimicgen = PosEuler2HT(PosEuler_base_mimicgen[None, ...])[0]
+        T_offset = PosEuler2HT(PosEuler_offset[None, ...])[0]
+
+        franka = FrankaEmikaPanda_torch()
+        franka.set_T_base(T_base_mimicgen)
+        franka.set_T_offset(T_offset)
+        self.sigmoid = nn.Sigmoid()
+
+        self.franka = franka
+        lower = [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973],
+        upper = [2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973]
 
         self.lower_t = torch.tensor(lower, device='cuda')
         self.upper_t = torch.tensor(upper, device='cuda')
-
-        self.sigmoid = nn.Sigmoid()
 
     def inverse_q_sample(self, x_t, t, noise):
         '''
@@ -431,7 +441,7 @@ class X0LossPlugin(nn.Module):  # No trainable parameters, inherit from nn.Modul
         x_0 = (x_t - sqrt_one_minus_alphas_bar * noise) / sqrt_alphas_bar
         return x_0
 
-    def eePoseMseLoss(self, x_t, t, noise, eePose_GT, normalizer: LinearNormalizer):
+    def eePoseMseLoss(self, x_t, t, noise, eePose_GT_with_open, normalizer: LinearNormalizer):
         '''
         x: JP: [B,H,8]
         eePose:[B,H, 3+x+1], 默认都是normalized的
@@ -441,20 +451,32 @@ class X0LossPlugin(nn.Module):  # No trainable parameters, inherit from nn.Modul
         x_0_pred = self.inverse_q_sample(x_t, t, noise)
 
         # denormalize x_0 为JP
-        JP_with_open_pred = normalizer.unnormalize({'action': x_0_pred})
+        JP_with_open_pred = normalizer.unnormalize({'action': x_0_pred})['action']
         JP_pred = JP_with_open_pred[..., :-1]
+        JP_pred = JP_pred.clamp(self.lower_t, self.upper_t)  # clamp to valid range
         isopen_pred = self.sigmoid(JP_with_open_pred[..., -1:])  # TODO：remove sigmoid
 
-        # 当前x_0的JP是什么eePose
-        eeHT_pred = self.franka.theta2HT(JP_pred)
-        pos_pred = eeHT_pred[..., :3, 3]
-        rot_pred = eeHT_pred[..., :3, :3]
-        quat_pred = mat2quat(rot_pred)
+        T_pred = self.franka.theta2HT(JP_pred, apply_offset=True)
+        pos_pred = T_pred[..., :3, 3]
+        mat_pred = T_pred[..., :3, :3]
+        orthod6d_pred = matrix_to_rotation_6d(mat_pred)
+        PosOrthod6d_pred = torch.cat([pos_pred, orthod6d_pred, isopen_pred], dim=-1)
 
-        eePose_pred = torch.cat([pos_pred, quat_pred, isopen_pred], dim=-1)
+        isopen_GT = eePose_GT_with_open[..., -1:]
+        eePose_GT = eePose_GT_with_open[..., :-1]
 
-        loss = F.mse_loss(eePose_pred, eePose_GT, reduction='none')
+        T_GT = eePose2HT(eePose_GT)
+        pos_GT = T_GT[..., :3, 3]
+        mat_GT = T_GT[..., :3, :3]
+        orthod6d_GT = matrix_to_rotation_6d(mat_GT)
+        PosOrthod6d_GT = torch.cat([pos_GT, orthod6d_GT, isopen_GT], dim=-1)
+
+        loss = F.mse_loss(PosOrthod6d_pred, PosOrthod6d_GT, reduction='none')
         loss = reduce(loss, 'b ... -> b (...)', 'mean')
         loss = loss.mean()
 
         return loss
+
+
+if __name__ == "__main__":
+    pass

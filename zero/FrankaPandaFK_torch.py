@@ -15,8 +15,10 @@ def tensorfp32(x):
         return torch.tensor(x, dtype=torch.float32)
     elif isinstance(x, np.ndarray):
         return torch.from_numpy(x).to(torch.float32)
+    elif isinstance(x, torch.Tensor):
+        return x.to(torch.float32)
     else:
-        raise TypeError("Input must be a list or numpy array")
+        raise TypeError(tensorfp32.__name__ + " only supports list, numpy.ndarray, or torch.Tensor types.")
 
 
 class FrankaEmikaPanda_torch(nn.Module):
@@ -167,21 +169,21 @@ class FrankaEmikaPanda_torch(nn.Module):
         T_oi = torch.stack(T_oi, dim=-3)
         return T_i1_i, T_oi
 
-    def theta2PosQuat(self, theta):  # assume no open
-        _, T_oi = self.get_T_oi(theta)
-        other_shape = theta.shape[:-1]
-        T_oi_last = T_oi[..., -1, :, :]
-        T_last2eePose = self.T_last2eePose.repeat(other_shape + (1, 1))
-        T_eePose = T_oi_last @ T_last2eePose
+    def theta2PosQuat(self, theta, apply_offset: bool):  # assume no open
+        T_eePose = self.theta2HT(theta, apply_offset)
         eePose = HT2eePose(T_eePose)
         return eePose
 
-    def theta2HT(self, theta):
+    def theta2HT(self, theta, apply_offset: bool):
         _, T_oi = self.get_T_oi(theta)
         other_shape = theta.shape[:-1]
         T_oi_last = T_oi[..., -1, :, :]
         T_last2eePose = self.T_last2eePose.repeat(other_shape + (1, 1))
         T_eePose = T_oi_last @ T_last2eePose
+        if apply_offset:
+            assert hasattr(self, 'T_offset'), "T_offset must be set before applying offset."
+            T_offset = self.T_offset.repeat(other_shape + (1, 1))
+            T_eePose = T_eePose @ T_offset
         return T_eePose
 
     def set_T_base(self, T_base):
@@ -190,6 +192,13 @@ class FrankaEmikaPanda_torch(nn.Module):
         :param T_base: The base transformation matrix.
         """
         self.T_base = tensorfp32(T_base)
+
+    def set_T_offset(self, T_offset):
+        """
+        Set the offset transformation matrix.
+        :param T_offset: The offset transformation matrix.
+        """
+        self.T_offset = tensorfp32(T_offset)
 
     def verify_data_integrity(self, eePose, JP):
         return NotImplementedError
