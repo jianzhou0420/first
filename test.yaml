@@ -20,23 +20,26 @@ spec:
 
       containers:
         - name: zero-container # It is recommended to name your container according to the project
-          image: docker.aiml.team/jian.zhou/mimicgen:test # You can reuse this image for different projects if their python dependencies are the same.
+          image: docker.aiml.team/jian.zhou/mimicgen:latest # You can reuse this image for different projects if their python dependencies are the same.
           imagePullPolicy: Always
           stdin: true
           tty: true
           command: ["/bin/bash", "-c"]
           args: 
               - |
-                export PATH=/opt/conda/bin:$PATH
-                source /opt/conda/etc/profile.d/conda.sh
-
-                conda activate base
-
+                apt install -y libegl1-mesa  libegl1-mesa-dev libgles2-mesa  libgl1-mesa-glx libgl1-mesa-dev libx11-dev 
+                source /root/miniforge3/etc/profile.d/conda.sh    # load the conda functions
+                conda activate equidiff
                 which python
-                python -c "import torch; print(torch.version.cuda)"
-                python -c "import torch; print(torch.cuda.is_available())"
-                nvidia-smi
- 
+                export HYDRA_FULL_ERROR=1
+                cd /data/first
+                git pull
+                pip install -e .
+                python train.py --config-name=train_diffusion_unet task_name=stack_d1 n_demo=100 \
+                +env_runner.n_envs=5 +env_runner.n_test=3 +env_runner.n_train=2 \
+
+
+
 
 
           resources:

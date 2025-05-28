@@ -52,7 +52,7 @@
 
 import time
 from equi_diffpo.policy.diffusion_unet_hybrid_image_policy import DiffusionUnetHybridImagePolicy
-from equi_diffpo.env_runner.robomimic_image_runner import RobomimicImageRunner
+from equi_diffpo.env_runner.robomimic_image_runner_JP import RobomimicImageRunner
 from equi_diffpo.workspace.train_diffusion_unet_hybrid_workspace import TrainDiffusionUnetHybridWorkspace
 
 import pickle

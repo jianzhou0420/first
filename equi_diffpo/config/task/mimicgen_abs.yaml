@@ -40,7 +40,7 @@ env_runner:
   past_action: ${past_action_visible}
   abs_action: *abs_action
   tqdm_interval_sec: 1.0
-  n_envs: 2
+  n_envs: 28
 
 dataset:
   # _target_: equi_diffpo.dataset.robomimic_replay_image_dataset.RobomimicReplayImageDataset

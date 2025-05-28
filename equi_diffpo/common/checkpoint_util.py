@@ -1,14 +1,15 @@
 from typing import Optional, Dict
 import os
 
+
 class TopKCheckpointManager:
     def __init__(self,
-            save_dir,
-            monitor_key: str,
-            mode='min',
-            k=1,
-            format_str='epoch={epoch:03d}-train_loss={train_loss:.3f}.ckpt'
-        ):
+                 save_dir,
+                 monitor_key: str,
+                 mode='min',
+                 k=1,
+                 format_str='epoch={epoch:03d}-train_loss={train_loss:.3f}.ckpt'
+                 ):
         assert mode in ['max', 'min']
         assert k >= 0
 
@@ -18,7 +19,7 @@ class TopKCheckpointManager:
         self.k = k
         self.format_str = format_str
         self.path_value_map = dict()
-    
+
     def get_ckpt_path(self, data: Dict[str, float]) -> Optional[str]:
         if self.k == 0:
             return None
@@ -26,12 +27,12 @@ class TopKCheckpointManager:
         value = data[self.monitor_key]
         ckpt_path = os.path.join(
             self.save_dir, self.format_str.format(**data))
-        
+
         if len(self.path_value_map) < self.k:
             # under-capacity
             self.path_value_map[ckpt_path] = value
             return ckpt_path
-        
+
         # at capacity
         sorted_map = sorted(self.path_value_map.items(), key=lambda x: x[1])
         min_path, min_value = sorted_map[0]
