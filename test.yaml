@@ -30,9 +30,11 @@ spec:
                 apt install -y libegl1-mesa  libegl1-mesa-dev libgles2-mesa  libgl1-mesa-glx libgl1-mesa-dev libx11-dev 
                 source /root/miniforge3/etc/profile.d/conda.sh    # load the conda functions
                 conda activate equidiff
+                pip uninstall -y equi_diffpo
                 which python
                 export HYDRA_FULL_ERROR=1
                 cd /data/first
+                git stash
                 git pull
                 pip install -e .
                 python train.py --config-name=train_diffusion_unet task_name=stack_d1 n_demo=100 \
