@@ -383,9 +383,20 @@ class DiffusionUnetHybridImagePolicyX0loss(BaseImagePolicy):
         loss = F.mse_loss(pred, target, reduction='none')
         loss = loss * loss_mask.type(loss.dtype)
         loss = reduce(loss, 'b ... -> b (...)', 'mean')
-        loss = loss.mean()
+        loss_diffusion = loss.mean()
 
-        return loss + x0Loss  # add X0 loss to the total loss
+        # balance the two losses
+        scale = 1.0
+        if loss_diffusion.item() < 0.3:
+            # if diffusion loss is zero, just return x0Loss
+            eps = 1e-8
+            with torch.no_grad():
+                l1 = loss_diffusion.item()
+                l2 = x0Loss.item()
+            scale = l1 / (l2 + eps)
+
+        total_loss = loss_diffusion + scale * x0Loss
+        return total_loss
 
 
 class X0LossPlugin(nn.Module):  # No trainable parameters, inherit from nn.Module just for coding
@@ -404,7 +415,7 @@ class X0LossPlugin(nn.Module):  # No trainable parameters, inherit from nn.Modul
 
         gripper_loc_bounds = torch.tensor(
             [[-0.11010312, -0.5557904, 0.71287104],
-             [0.64813266, 0.51835946, 1.51160351]], device='cuda')
+             [0.64813266, 0.51835946, 1.51160351]])
 
         rb('gripper_loc_bounds', gripper_loc_bounds)
         rb('sqrt_alphas_bar', torch.sqrt(alphas_bar))
@@ -415,8 +426,8 @@ class X0LossPlugin(nn.Module):  # No trainable parameters, inherit from nn.Modul
         rb('coeff2', self.coeff1 * (1. - alphas) / torch.sqrt(1. - alphas_bar))
 
         # D-H Parameters
-        PosEuler_base_mimicgen = torch.tensor([-0.561, 0., 0.925, 0., 0., 0.], device='cuda')
-        PosEuler_offset = torch.tensor([0., 0., 0., 0., 0., - 180.], device='cuda')
+        PosEuler_base_mimicgen = torch.tensor([-0.561, 0., 0.925, 0., 0., 0.])
+        PosEuler_offset = torch.tensor([0., 0., 0., 0., 0., - 180.])
         T_base_mimicgen = PosEuler2HT(PosEuler_base_mimicgen[None, ...])[0]
         T_offset = PosEuler2HT(PosEuler_offset[None, ...])[0]
 
@@ -429,8 +440,11 @@ class X0LossPlugin(nn.Module):  # No trainable parameters, inherit from nn.Modul
         lower = [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973],
         upper = [2.8973, 1.7628, 2.8973, -0.0698, 2.8973, 3.7525, 2.8973]
 
-        self.lower_t = torch.tensor(lower, device='cuda')
-        self.upper_t = torch.tensor(upper, device='cuda')
+        lower_t = torch.tensor(lower)
+        upper_t = torch.tensor(upper)
+
+        rb('lower_t', lower_t)
+        rb('upper_t', upper_t)
 
     def inverse_q_sample(self, x_t, t, noise):
         '''
@@ -445,7 +459,6 @@ class X0LossPlugin(nn.Module):  # No trainable parameters, inherit from nn.Modul
         '''
         x: JP: [B,H,8]
         eePose:[B,H, 3+x+1], 默认都是normalized的
-
         '''
         # x_t -> x_0
         x_0_pred = self.inverse_q_sample(x_t, t, noise)

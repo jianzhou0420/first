@@ -103,6 +103,7 @@ class FrankaEmikaPanda_torch(nn.Module):
         rb('PosEuler_ik_gripper_close', PosEuler_ik_gripper_close)
         rb('PosEuler_ik_gripper_open', PosEuler_ik_gripper_open)
         rb('T_base', T_base)
+        rb('T_offset', None)
         rb('JP_offset', JP_offset)
         rb('bbox_link_half', bbox_link_half)
         rb('T_last2eePose', T_last2eePose)

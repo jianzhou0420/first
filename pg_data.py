@@ -187,8 +187,7 @@ def create_x0loss_from_JP(src: str):
 
 
 def workspace():
-    create_x0loss_from_JP(
-        "/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5")
+    inspect_h5py_file('/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP_x0loss.hdf5')
 
 
 if __name__ == '__main__':
