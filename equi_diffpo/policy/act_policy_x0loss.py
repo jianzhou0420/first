@@ -131,7 +131,6 @@ class ACTPolicyWrapper(BaseImagePolicy):
                          "dropout": 0.1,
                          "pre_norm": False,
                          "masks": False,
-                         action_dim: action_dim,
                          }
         self.model = ACTPolicy(policy_config)
         self.optimizer = self.model.configure_optimizers()
@@ -233,7 +232,7 @@ class ACTPolicyWrapper(BaseImagePolicy):
         return forward_dict['loss']
 
 
-class ACTPolicyWrapper_JP(BaseImagePolicy):
+class ACTPolicyWrapper_JP(ACTPolicyWrapper):
     def __init__(self,
                  shape_meta: dict,
                  max_timesteps: int,
@@ -271,7 +270,6 @@ class ACTPolicyWrapper_JP(BaseImagePolicy):
                          "dropout": 0.1,
                          "pre_norm": False,
                          "masks": False,
-                         "action_dim": action_dim,
                          }
         self.model = ACTPolicy(policy_config)
         self.optimizer = self.model.configure_optimizers()
@@ -290,20 +288,23 @@ class ACTPolicyWrapper_JP(BaseImagePolicy):
         self.all_time_actions = torch.zeros([self.n_envs, self.max_timesteps, self.max_timesteps + self.num_queries, self.action_dim]).to(self.device)
         self.t = 0
 
-    def set_normalizer(self, normalizer: LinearNormalizer):
-        self.normalizer.load_state_dict(normalizer.state_dict())
+    def compute_loss(self, batch):
+        # nobs_dict = self.normalizer.normalize(batch['obs'])
+        nobs_dict = batch['obs']
+        nactions = self.normalizer['action'].normalize(batch['action'])
+        nobs_dict = dict_apply(nobs_dict, lambda x: x[:, 0, ...])
+        # sixd = self.quat_to_sixd.forward(nobs_dict['robot0_eef_quat'])
+        qpos = torch.cat([nobs_dict['robot0_joint_pos'], nobs_dict['robot0_gripper_qpos']], dim=1)
+        image = torch.stack([nobs_dict['agentview_image'], nobs_dict['robot0_eye_in_hand_image']], dim=1)
 
-    def to(self, *args, **kwargs):
-        device, dtype, non_blocking, convert_to_format = torch._C._nn._parse_to(*args, **kwargs)
-        if device is not None:
-            self.model.device = device
-        super().to(*args, **kwargs)
+        forward_dict = self.model(qpos, image, nactions, torch.zeros([*nactions.shape[:2]]).bool().to(self.device))
+        return forward_dict['loss']
 
     def predict_action(self, obs_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         # nobs_dict = self.normalizer(obs_dict)
         nobs_dict = dict_apply(obs_dict, lambda x: x[:, 0, ...])
         # sixd = self.quat_to_sixd.forward(nobs_dict['robot0_eef_quat'])
-        qpos = torch.cat([nobs_dict['robot0_joint_pos'], nobs_dict['robot0_gripper_qpos']], dim=1)
+        qpos = torch.cat([nobs_dict['robot0_eef_pos'], nobs_dict['robot0_eef_quat'], nobs_dict['robot0_gripper_qpos']], dim=1)
         image = torch.stack([nobs_dict['agentview_image'], nobs_dict['robot0_eye_in_hand_image']], dim=1)
 
         if self.temporal_agg:
@@ -355,19 +356,3 @@ class ACTPolicyWrapper_JP(BaseImagePolicy):
             }
         self.t += 1
         return result
-
-    def reset(self):
-        self.all_time_actions = torch.zeros([self.n_envs, self.max_timesteps, self.max_timesteps + self.num_queries, self.action_dim]).to(self.device)
-        self.t = 0
-
-    def compute_loss(self, batch):
-        # nobs_dict = self.normalizer.normalize(batch['obs'])
-        nobs_dict = batch['obs']
-        nactions = self.normalizer['action'].normalize(batch['action'])
-        nobs_dict = dict_apply(nobs_dict, lambda x: x[:, 0, ...])
-        # sixd = self.quat_to_sixd.forward(nobs_dict['robot0_eef_quat'])
-        qpos = torch.cat([nobs_dict['robot0_joint_pos'], nobs_dict['robot0_gripper_qpos']], dim=1)
-        image = torch.stack([nobs_dict['agentview_image'], nobs_dict['robot0_eye_in_hand_image']], dim=1)
-
-        forward_dict = self.model(qpos, image, nactions, torch.zeros([*nactions.shape[:2]]).bool().to(self.device))
-        return forward_dict['loss']

@@ -20,9 +20,12 @@
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
             "args": [
-                "--config-name=train_act_abs",
+                "--config-name=train_act_abs_JP",
                 "task_name=stack_d1",
-                "n_demo=10"
+                "n_demo=10",
+                "task.env_runner.n_envs=2",
+                "task.env_runner.n_train=1",
+                "task.env_runner.n_test=1",
             ],
             "envFile": "${workspaceFolder}/.vscode/.env"
         },

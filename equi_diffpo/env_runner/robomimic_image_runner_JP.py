@@ -289,8 +289,8 @@ class RobomimicImageRunner(BaseImageRunner):
                                       lambda x: torch.from_numpy(x).to(
                                           device=device))
 
-                if 'robot0_joint_pos' in obs_dict:
-                    del obs_dict['robot0_joint_pos']
+                # if 'robot0_joint_pos' in obs_dict:
+                #     del obs_dict['robot0_joint_pos']
 
                 # run policy
                 with torch.no_grad():

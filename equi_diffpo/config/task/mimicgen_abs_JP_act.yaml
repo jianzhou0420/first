@@ -1,4 +1,4 @@
-name: mimicgen_abs_JP
+name: mimicgen_abs_JP_act
 
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
@@ -11,6 +11,8 @@ shape_meta: &shape_meta
       type: rgb
     robot0_joint_pos:
       shape: [7]
+    robot0_gripper_qpos:
+      shape: [2]
       # type default: low_dim
   action: 
     shape: [8]
@@ -55,6 +57,6 @@ dataset:
   abs_action: *abs_action
   rotation_rep: 'rotation_6d'
   use_legacy_normalizer: False
-  use_cache: 0
+  use_cache: 1
   seed: 42
   val_ratio: 0.02
