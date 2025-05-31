@@ -1,12 +1,18 @@
 defaults:
   - train_diffusion_unet
   - _self_
-  - override task: mimicgen_abs_JP
+  - override task: mimicgen_abs_JP_1
 
 
 dataset: equi_diffpo.dataset.robomimic_replay_image_dataset_JP.RobomimicReplayImageDataset_JP
 dataset_path: data/robomimic/datasets/${task_name}/${task_name}_abs_JP.hdf5
 
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6
 
 training:
   device: "cuda:0"

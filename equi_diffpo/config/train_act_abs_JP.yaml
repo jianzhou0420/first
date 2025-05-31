@@ -1,0 +1,5 @@
+defaults:
+  - train_act_abs
+  - _self_
+  - task: mimicgen_abs_JP
+
