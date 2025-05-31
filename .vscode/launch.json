@@ -20,7 +20,7 @@
             "program": "${workspaceFolder}/train.py",
             "console": "integratedTerminal",
             "args": [
-                "--config-name=train_act_abs_JP",
+                "--config-name=train_act_abs_JP_eeloss",
                 "task_name=stack_d1",
                 "n_demo=10",
                 "task.env_runner.n_envs=2",

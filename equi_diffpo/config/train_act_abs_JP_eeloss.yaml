@@ -1,0 +1,31 @@
+defaults:
+  - train_act_abs
+  - _self_
+  - override task: mimicgen_abs_JP_act
+
+
+dataset: equi_diffpo.dataset.robomimic_replay_image_dataset_JP.RobomimicReplayImageDataset_JP
+dataset_path: data/robomimic/datasets/${task_name}/${task_name}_abs_JP.hdf5
+
+policy:
+  _target_: equi_diffpo.policy.act_policy_JP_eeloss.ACTPolicyWrapper_JP
+
+  shape_meta: ${shape_meta}
+  
+  max_timesteps: ${task.env_runner.max_steps}
+  temporal_agg: false
+  n_envs: ${task.env_runner.n_envs}
+  horizon: ${horizon}
+
+training:
+  device: "cuda:0"
+  seed: 0
+  debug: False
+  resume: True
+  num_epochs: ${eval:'50000 / ${n_demo}'}
+  rollout_every: ${eval:'1000 / ${n_demo}'}
+  checkpoint_every: ${eval:'1000 / ${n_demo}'}
+  val_every: 1
+  max_train_steps: null
+  max_val_steps: null
+  tqdm_interval_sec: 1.0
