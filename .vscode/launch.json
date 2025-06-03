@@ -28,6 +28,7 @@
                 "task.env_runner.n_test=1",
                 "logging.project=ProjectFirst_Debug",
                 "logging.name=Train_ACT_JP_EELoss",
+                "logging.mode=offline"
             ],
             "envFile": "${workspaceFolder}/.vscode/.env"
         },
@@ -46,6 +47,7 @@
                 "task.env_runner.n_test=1",
                 "logging.project=ProjectFirst_Debug",
                 "logging.name=Train_DP_Unet",
+                "logging.mode=offline"
             ],
             "envFile": "${workspaceFolder}/.vscode/.env"
         },
@@ -64,6 +66,7 @@
                 "task.env_runner.n_test=1",
                 "logging.project=ProjectFirst_Debug",
                 "logging.name=Train_General",
+                "logging.mode=offline"
             ],
             "envFile": "${workspaceFolder}/.vscode/.env"
         },

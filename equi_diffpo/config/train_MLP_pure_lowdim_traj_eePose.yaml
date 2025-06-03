@@ -98,8 +98,8 @@ training:
   use_ema: True
   # training loop control
   # in epochs
-  rollout_every: 50
-  checkpoint_every: 50 
+  rollout_every: ${eval:'50000 / ${n_demo}/5'}
+  checkpoint_every: ${eval:'50000 / ${n_demo}/5'} 
   val_every: 1
   sample_every: 5
   # steps per epoch

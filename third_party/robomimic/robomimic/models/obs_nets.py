@@ -28,10 +28,10 @@ from robomimic.models.transformers import PositionalEncoding, GPT_Backbone
 
 
 def obs_encoder_factory(
-        obs_shapes,
-        feature_activation=nn.ReLU,
-        encoder_kwargs=None,
-    ):
+    obs_shapes,
+    feature_activation=nn.ReLU,
+    encoder_kwargs=None,
+):
     """
     Utility function to create an @ObservationEncoder from kwargs specified in config.
 
@@ -66,7 +66,7 @@ def obs_encoder_factory(
             deepcopy(encoder_kwargs[obs_modality])
 
         for obs_module, cls_mapping in zip(("core", "obs_randomizer"),
-                                      (ObsUtils.OBS_ENCODER_CORES, ObsUtils.OBS_RANDOMIZERS)):
+                                           (ObsUtils.OBS_ENCODER_CORES, ObsUtils.OBS_RANDOMIZERS)):
             # Sanity check for kwargs in case they don't exist / are None
             if enc_kwargs.get(f"{obs_module}_kwargs", None) is None:
                 enc_kwargs[f"{obs_module}_kwargs"] = {}
@@ -103,6 +103,7 @@ class ObservationEncoder(Module):
     Call @register_obs_key to register observation keys with the encoder and then
     finally call @make to create the encoder networks. 
     """
+
     def __init__(self, feature_activation=nn.ReLU):
         """
         Args:
@@ -120,12 +121,12 @@ class ObservationEncoder(Module):
         self._locked = False
 
     def register_obs_key(
-        self, 
+        self,
         name,
-        shape, 
-        net_class=None, 
-        net_kwargs=None, 
-        net=None, 
+        shape,
+        net_class=None,
+        net_kwargs=None,
+        net=None,
         randomizer=None,
         share_net_from=None,
     ):
@@ -289,6 +290,7 @@ class ObservationDecoder(Module):
     module in order to implement more complex schemes for generating each
     modality.
     """
+
     def __init__(
         self,
         decode_shapes,
@@ -327,7 +329,7 @@ class ObservationDecoder(Module):
         Returns output shape for this module, which is a dictionary instead
         of a list since outputs are dictionaries.
         """
-        return { k : list(self.obs_shapes[k]) for k in self.obs_shapes }
+        return {k: list(self.obs_shapes[k]) for k in self.obs_shapes}
 
     def forward(self, feats):
         """
@@ -365,6 +367,7 @@ class ObservationGroupEncoder(Module):
     and each OrderedDict should be a map between modalities and 
     expected input shapes (e.g. { 'image' : (3, 120, 160) }).
     """
+
     def __init__(
         self,
         observation_group_shapes,
@@ -403,7 +406,7 @@ class ObservationGroupEncoder(Module):
         # type checking
         assert isinstance(observation_group_shapes, OrderedDict)
         assert np.all([isinstance(observation_group_shapes[k], OrderedDict) for k in observation_group_shapes])
-        
+
         self.observation_group_shapes = observation_group_shapes
 
         # create an observation encoder per observation group
@@ -482,12 +485,13 @@ class MIMO_MLP(Module):
     outputs is to use a linear layer branch to produce each modality separately
     (including visual outputs).
     """
+
     def __init__(
         self,
         input_obs_group_shapes,
         output_shapes,
         layer_dims,
-        layer_func=nn.Linear, 
+        layer_func=nn.Linear,
         activation=nn.ReLU,
         encoder_kwargs=None,
     ):
@@ -551,7 +555,7 @@ class MIMO_MLP(Module):
             layer_dims=layer_dims[:-1],
             layer_func=layer_func,
             activation=activation,
-            output_activation=activation, # make sure non-linearity is applied before decoder
+            output_activation=activation,  # make sure non-linearity is applied before decoder
         )
 
         # decoder for output modalities
@@ -565,7 +569,7 @@ class MIMO_MLP(Module):
         Returns output shape for this module, which is a dictionary instead
         of a list since outputs are dictionaries.
         """
-        return { k : list(self.output_shapes[k]) for k in self.output_shapes }
+        return {k: list(self.output_shapes[k]) for k in self.output_shapes}
 
     def forward(self, **inputs):
         """
@@ -614,6 +618,7 @@ class RNN_MIMO_MLP(Module):
     All temporal inputs are processed by a shared @ObservationGroupEncoder,
     followed by an RNN, and then a per-step multi-output MLP. 
     """
+
     def __init__(
         self,
         input_obs_group_shapes,
@@ -688,7 +693,7 @@ class RNN_MIMO_MLP(Module):
 
         # bidirectional RNNs mean that the output of RNN will be twice the hidden dimension
         rnn_is_bidirectional = rnn_kwargs.get("bidirectional", False)
-        num_directions = int(rnn_is_bidirectional) + 1 # 2 if bidirectional, 1 otherwise
+        num_directions = int(rnn_is_bidirectional) + 1  # 2 if bidirectional, 1 otherwise
         rnn_output_dim = num_directions * rnn_hidden_dim
 
         per_step_net = None
@@ -755,10 +760,10 @@ class RNN_MIMO_MLP(Module):
         obs_group = list(self.input_obs_group_shapes.keys())[0]
         mod = list(self.input_obs_group_shapes[obs_group].keys())[0]
         T = input_shape[obs_group][mod][0]
-        TensorUtils.assert_size_at_dim(input_shape, size=T, dim=0, 
-                msg="RNN_MIMO_MLP: input_shape inconsistent in temporal dimension")
+        TensorUtils.assert_size_at_dim(input_shape, size=T, dim=0,
+                                       msg="RNN_MIMO_MLP: input_shape inconsistent in temporal dimension")
         # returns a dictionary instead of list since outputs are dictionaries
-        return { k : [T] + list(self.output_shapes[k]) for k in self.output_shapes }
+        return {k: [T] + list(self.output_shapes[k]) for k in self.output_shapes}
 
     def forward(self, rnn_init_state=None, return_state=False, **inputs):
         """
@@ -790,13 +795,13 @@ class RNN_MIMO_MLP(Module):
         assert rnn_inputs.ndim == 3  # [B, T, D]
         if self.per_step:
             return self.nets["rnn"].forward(inputs=rnn_inputs, rnn_init_state=rnn_init_state, return_state=return_state)
-        
+
         # apply MLP + decoder to last RNN output
         outputs = self.nets["rnn"].forward(inputs=rnn_inputs, rnn_init_state=rnn_init_state, return_state=return_state)
         if return_state:
             outputs, rnn_state = outputs
 
-        assert outputs.ndim == 3 # [B, T, D]
+        assert outputs.ndim == 3  # [B, T, D]
         if self._has_mlp:
             outputs = self.nets["decoder"](self.nets["mlp"](outputs[:, -1]))
         else:
@@ -823,12 +828,12 @@ class RNN_MIMO_MLP(Module):
 
             rnn_state: return the new rnn state
         """
-        # ensure that the only extra dimension is batch dim, not temporal dim 
+        # ensure that the only extra dimension is batch dim, not temporal dim
         assert np.all([inputs[k].ndim - 1 == len(self.input_shapes[k]) for k in self.input_shapes])
 
         inputs = TensorUtils.to_sequence(inputs)
         outputs, rnn_state = self.forward(
-            inputs, 
+            inputs,
             rnn_init_state=rnn_state,
             return_state=True,
         )
@@ -867,6 +872,7 @@ class MIMO_Transformer(Module):
     outputs is to use a linear layer branch to produce each modality separately
     (including visual outputs).
     """
+
     def __init__(
         self,
         input_obs_group_shapes,
@@ -904,7 +910,7 @@ class MIMO_Transformer(Module):
             encoder_kwargs (dict): observation encoder config
         """
         super(MIMO_Transformer, self).__init__()
-        
+
         assert isinstance(input_obs_group_shapes, OrderedDict)
         assert np.all([isinstance(input_obs_group_shapes[k], OrderedDict) for k in input_obs_group_shapes])
         assert isinstance(output_shapes, OrderedDict)
@@ -945,7 +951,7 @@ class MIMO_Transformer(Module):
 
         # layer norm for embeddings
         self.nets["embed_ln"] = nn.LayerNorm(transformer_embed_dim)
-        
+
         # dropout for input embeddings
         self.nets["embed_drop"] = nn.Dropout(transformer_emb_dropout)
 
@@ -976,7 +982,7 @@ class MIMO_Transformer(Module):
         Returns output shape for this module, which is a dictionary instead
         of a list since outputs are dictionaries.
         """
-        return { k : list(self.output_shapes[k]) for k in self.output_shapes }
+        return {k: list(self.output_shapes[k]) for k in self.output_shapes}
 
     def embed_timesteps(self, embeddings):
         """
@@ -1036,7 +1042,6 @@ class MIMO_Transformer(Module):
 
         return embeddings
 
-    
     def forward(self, **inputs):
         """
         Process each set of inputs in its own observation group.
