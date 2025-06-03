@@ -1,7 +1,7 @@
 defaults:
   - train_diffusion_unet
   - _self_
-  - override task: mimicgen_abs_JP
+  - override task: mimicgen_abs_JP_optimization
 
 
 dataset: equi_diffpo.dataset.robomimic_replay_image_dataset_JP.RobomimicReplayImageDataset_JP
@@ -33,11 +33,12 @@ training:
   # misc
   tqdm_interval_sec: 1.0
 
+
 logging:
   project: diffusion_policy_${task_name}
   resume: True
   mode: online
-  name: DP_traj_JP
+  name: DP_JP_optimization
   tags: ["${name}", "${task_name}", "${exp_name}"]
   id: null
   group: null
