@@ -7,12 +7,6 @@ data/
 *.pyo
 *.pyd
 __pycache__/
-__pycache__/*
-*/__pycache__/*
-
-# Virtual environment
-venv/
-.env/
 
 # IDE files
 
