@@ -1,5 +1,6 @@
 LICENSE
 setup.py
+equi_diffpo/__init__.py
 equi_diffpo.egg-info/PKG-INFO
 equi_diffpo.egg-info/SOURCES.txt
 equi_diffpo.egg-info/dependency_links.txt

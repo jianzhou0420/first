@@ -20,7 +20,7 @@ e = IPython.embed
 
 
 class ACTPolicy(nn.Module):
-    def __init__(self, args_override, normalizer: LinearNormalizer = None):
+    def __init__(self, args_override):
         super().__init__()
         model, optimizer = build_ACT_model_and_optimizer(args_override)
         self.model = model  # CVAE decoder
@@ -51,7 +51,7 @@ class ACTPolicy(nn.Module):
             loss_dict['loss'] = loss_dict['l1'] + loss_dict['kl'] * self.kl_weight
 
             # eePoseLossPlugin
-            eePoseLoss = self.eeLoss_plugin.eePoseMseLoss(
+            eePoseLoss = self.eeLoss_plugin.eeLoss(
                 a_hat, actions, self.normalizer)
             loss_dict['eePoseLoss'] = eePoseLoss
             loss_dict['loss'] += eePoseLoss
@@ -96,24 +96,13 @@ class eePoseLossPlugin(nn.Module):  # No trainable parameters, inherit from nn.M
         rb('lower_t', lower_t)
         rb('upper_t', upper_t)
 
-    def eePoseMseLoss(self, JP_pred, eePose_GT_with_open, normalizer: LinearNormalizer):
+    def eeLoss(self, JP_pred, eePose_GT_with_open, normalizer: LinearNormalizer):
         '''
         x: JP: [B,H,8]
         eePose:[B,H, 3+x+1], 默认都是normalized的
         '''
 
-        # denormalize x_0 为JP
-        JP_with_open_pred = normalizer.unnormalize({'action': JP_pred})['action']
-        JP_pred = JP_with_open_pred[..., :-1]
-        JP_pred = JP_pred.clamp(self.lower_t, self.upper_t)  # clamp to valid range
-        isopen_pred = self.sigmoid(JP_with_open_pred[..., -1:])  # TODO：remove sigmoid
-
-        T_pred = self.franka.theta2HT(JP_pred, apply_offset=True)
-        pos_pred = T_pred[..., :3, 3]
-        mat_pred = T_pred[..., :3, :3]
-        orthod6d_pred = matrix_to_rotation_6d(mat_pred)
-        PosOrthod6d_pred = torch.cat([pos_pred, orthod6d_pred, isopen_pred], dim=-1)
-
+        PosOrthod6d_pred = self.JP2eePose_franka(JP_pred, normalizer)
         isopen_GT = eePose_GT_with_open[..., -1:]
         eePose_GT = eePose_GT_with_open[..., :-1]
 
@@ -127,6 +116,20 @@ class eePoseLossPlugin(nn.Module):  # No trainable parameters, inherit from nn.M
         loss = reduce(loss, 'b ... -> b (...)', 'mean')
         loss = loss.mean()
         return loss
+
+    def JP2eePose_franka(self, JP, normalizer: LinearNormalizer):
+        # denormalize x_0 为JP
+        JP_with_open_pred = normalizer.unnormalize({'action': JP_pred})['action']
+        JP_pred = JP_with_open_pred[..., :-1]
+        JP_pred = JP_pred.clamp(self.lower_t, self.upper_t)  # clamp to valid range
+        isopen_pred = self.sigmoid(JP_with_open_pred[..., -1:])  # TODO：remove sigmoid
+
+        T_pred = self.franka.theta2HT(JP_pred, apply_offset=True)
+        pos_pred = T_pred[..., :3, 3]
+        mat_pred = T_pred[..., :3, :3]
+        orthod6d_pred = matrix_to_rotation_6d(mat_pred)
+        PosOrthod6d_pred = torch.cat([pos_pred, orthod6d_pred, isopen_pred], dim=-1)
+        return PosOrthod6d_pred
 
 
 class CNNMLPPolicy(nn.Module):
@@ -217,8 +220,6 @@ class ACTPolicyWrapper_JP(BaseImagePolicy):
         self.optimizer = self.model.configure_optimizers()
         self.normalizer = LinearNormalizer()
 
-        self.quat_to_sixd = RotationTransformer('quaternion', 'rotation_6d')
-
         self.num_queries = policy_config['num_queries']
         self.query_frequency = 1
         self.temporal_agg = temporal_agg
@@ -243,7 +244,6 @@ class ACTPolicyWrapper_JP(BaseImagePolicy):
     def predict_action(self, obs_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         # nobs_dict = self.normalizer(obs_dict)
         nobs_dict = dict_apply(obs_dict, lambda x: x[:, 0, ...])
-        # sixd = self.quat_to_sixd.forward(nobs_dict['robot0_eef_quat'])
         qpos = torch.cat([nobs_dict['robot0_joint_pos'], nobs_dict['robot0_gripper_qpos']], dim=1)
         image = torch.stack([nobs_dict['agentview_image'], nobs_dict['robot0_eye_in_hand_image']], dim=1)
 
@@ -306,7 +306,6 @@ class ACTPolicyWrapper_JP(BaseImagePolicy):
         nobs_dict = batch['obs']
         nactions = self.normalizer['action'].normalize(batch['action'])
         nobs_dict = dict_apply(nobs_dict, lambda x: x[:, 0, ...])
-        # sixd = self.quat_to_sixd.forward(nobs_dict['robot0_eef_quat'])
         qpos = torch.cat([nobs_dict['robot0_joint_pos'], nobs_dict['robot0_gripper_qpos']], dim=1)
         image = torch.stack([nobs_dict['agentview_image'], nobs_dict['robot0_eye_in_hand_image']], dim=1)
 

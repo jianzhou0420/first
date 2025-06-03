@@ -52,7 +52,6 @@
 
 import time
 from equi_diffpo.policy.diffusion_unet_hybrid_image_policy import DiffusionUnetHybridImagePolicy
-from equi_diffpo.env_runner.robomimic_image_runner_JP import RobomimicImageRunner
 from equi_diffpo.workspace.train_diffusion_unet_hybrid_workspace import TrainDiffusionUnetHybridWorkspace
 
 import pickle
@@ -73,33 +72,7 @@ class DebugPolicyCreator:
         return policy
 
     @staticmethod
-    def get_a_empty_policy():
-        shape_meta = {
-            'obs': {
-                'agentview_image': {
-                    'shape': [3, 84, 84],
-                    'type': 'rgb'
-                },
-                'robot0_eye_in_hand_image': {
-                    'shape': [3, 84, 84],
-                    'type': 'rgb'
-                },
-                'robot0_eef_pos': {
-                    'shape': [3]
-                },
-                'robot0_eef_quat': {
-                    'shape': [4]
-                },
-                'robot0_gripper_qpos': {
-                    'shape': [2]
-                },
-
-
-            },
-            'action': {
-                'shape': [8]
-            }
-        }
+    def get_a_empty_policy(shape_meta, dataset_path=None):
         noise_scheduler = DDPMScheduler(
             num_train_timesteps=100,
             beta_start=0.0001,
@@ -147,21 +120,21 @@ class DebugPolicyCreator:
         )
         policy.eval()
 
-        from equi_diffpo.dataset.robomimic_replay_image_dataset import RobomimicReplayImageDataset
+        from equi_diffpo.dataset.robomimic_replay_image_dataset_tmp import RobomimicReplayImageDataset
 
         # configure dataset
         dataset = RobomimicReplayImageDataset(
             n_demo=10,
             shape_meta=shape_meta,
-            dataset_path='/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5',
+            dataset_path=dataset_path,
             horizon=16,
             pad_before=1,
             pad_after=7,
             n_obs_steps=2,
-            abs_action=0,
+            abs_action=1,
             rotation_rep='rotation_6d',
             use_legacy_normalizer=False,
-            use_cache=1,
+            use_cache=0,
             seed=42,
             val_ratio=0.02,
         )
@@ -177,55 +150,82 @@ class DebugPolicyCreator:
         class DummyPolicy(BaseImagePolicy):
             pass
 
-        return policy,
+        return policy, shape_meta_policy
 
 
 if __name__ == '__main__':
     # policy, shape_meta = DebugPolicyCreator.get_a_trained_policy() #TODO
-    policy = DebugPolicyCreator.get_a_trained_policy(
-        path='/media/jian/ssd4t/DP/first/data/outputs/2025.05.24/23.23.03_diff_c_stack_d1/checkpoints/latest.ckpt'
-    ).to('cuda')
-    shape_meta = {
+    # policy = DebugPolicyCreator.get_a_trained_policy(
+    #     path='/media/jian/ssd4t/DP/first/data/outputs/2025.05.24/23.23.03_diff_c_stack_d1/checkpoints/latest.ckpt'
+    # ).to('cuda')
+
+    # shape_meta = {
+    #     "obs": {
+    #         "agentview_image": {
+    #             "shape": [3, 84, 84],
+    #             "type": "rgb",
+    #         },
+    #         "robot0_eye_in_hand_image": {
+    #             "shape": [3, 84, 84],
+    #             "type": "rgb",
+    #         },
+    #         "robot0_eef_pos": {
+    #             "shape": [3],
+    #             "type": "low_dim",
+    #         },
+    #         "robot0_eef_quat": {
+    #             "shape": [4],
+    #             "type": "low_dim",
+    #         },
+    #         "robot0_gripper_qpos": {
+    #             "shape": [2],
+    #             "type": "low_dim",
+    #         },
+    #     },
+    #     "action": {
+    #         "shape": [8],
+    #     },
+    # }
+    shape_meta_policy = {
         "obs": {
-            "agentview_image": {
-                "shape": [3, 84, 84],
-                "type": "rgb",
-            },
-            "robot0_eye_in_hand_image": {
-                "shape": [3, 84, 84],
-                "type": "rgb",
-            },
-            "robot0_eef_pos": {
-                "shape": [3],
-                "type": "low_dim",
-            },
-            "robot0_eef_quat": {
-                "shape": [4],
-                "type": "low_dim",
-            },
-            "robot0_gripper_qpos": {
-                "shape": [2],
-                "type": "low_dim",
-            },
-            "robot0_joint_pos": {
-                "shape": [7],
+            "states": {
+                "shape": [45],
                 "type": "low_dim",
             }
-
         },
         "action": {
-            "shape": [8],
-        },
+            "shape": [10],
+        }
     }
-    dataset_path = "/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5"
+
+    shape_meta_env = {
+        "obs": {
+            "agentview_image":
+                {
+                    "shape": [3, 84, 84],
+                    "type": "rgb",
+                },
+            "states": {
+                "shape": [45],
+                    }
+        },
+        "action": {
+            "shape": [10],
+        }
+    }
+    dataset_path = "/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_pure_lowdim_traj_eePose.hdf5"
+
+    policy, _ = DebugPolicyCreator.get_a_empty_policy(shape_meta=shape_meta_policy, dataset_path=dataset_path)
+
+    from equi_diffpo.env_runner.robomimic_image_runner_tmp import RobomimicImageRunner
 
     env_runner = RobomimicImageRunner(
         dataset_path=dataset_path,
-        shape_meta=shape_meta,
-        n_train=6,
+        shape_meta=shape_meta_env,
+        n_train=1,
         n_train_vis=2,
         train_start_idx=0,
-        n_test=10,
+        n_test=1,
         n_test_vis=4,
         test_start_seed=100000,
         max_steps=300,
@@ -235,9 +235,9 @@ if __name__ == '__main__':
         fps=10,
         crf=22,
         past_action=False,
-        abs_action=0,
+        abs_action=1,
         tqdm_interval_sec=1.0,
-        n_envs=16,
+        n_envs=2,
         output_dir='./test'
     )
 

@@ -5,20 +5,20 @@ import h5py
 
 import numpy as np
 from codebase.z_utils.Rotation import *
+from zero.FrankaPandaFK_torch import FrankaEmikaPanda_torch
 from zero.FrankaPandaFK import FrankaEmikaPanda
-
 import torch
 
 
-def compare_two_trajectories(action0, action1):
+def compare_two_trajectories(action0, action1, label0='action0', label1='action1'):
     x = list(range(len(action0)))  # assumes all vectors have the same length
     B, D = action0.shape
     assert action1.shape == (B, D), f"action1 shape {action1.shape} does not match action0 shape {action0.shape}"
 
     fig, axes = plt.subplots(1, D, figsize=(12, 4))
     for i in range(D):
-        axes[i].plot(x, action0[:, i], marker='o', label='action0')
-        axes[i].plot(x, action1[:, i], marker='o', label='action1')
+        axes[i].plot(x, action0[:, i], marker='o', label=label0)
+        axes[i].plot(x, action1[:, i], marker='o', label=label1)
         axes[i].set_title(f'Action Dimension {i}')
         axes[i].set_xlabel('Index')
         axes[i].set_ylabel('Value')
@@ -141,8 +141,21 @@ def show_eePose_action_with_obs(path):
         print('eePose', eePose[:10])
 
 
-def validate_JP_actions(path):
-    franka = FrankaEmikaPanda()
+def validate_JP_actions(path='/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5'):
+    T_base_mimicgen = torch.tensor([[1., 0, 0, -0.561],
+                                    [0, 1., 0., 0],
+                                    [0, 0., 1., 0.925],
+                                    [0., 0., 0., 1.]])
+
+    T_offset = torch.tensor([[-1, 0, 0., 0],
+                             [0, -1., 0., 0],
+                             [0, 0, 1., 0],
+                             [0, 0, 0., 1.]])
+
+    franka = FrankaEmikaPanda_torch()
+    franka.set_T_base(T_base_mimicgen)
+    franka.set_T_offset(T_offset)
+
     with h5py.File(path, 'r') as f:
         demo0 = f['data/demo_0']
         actions = deepcopy(demo0['actions'][...])
@@ -152,36 +165,61 @@ def validate_JP_actions(path):
         quat_ee = deepcopy(demo0['obs']['robot0_eef_quat'][...])
 
         eePose_obs = np.concatenate([pos_ee, quat_ee], axis=-1)
-        T_base_mimicgen = np.array([[1., 0, 0, -0.561],
-                                    [0, 1., 0., 0],
-                                    [0, 0., 1., 0.925],
-                                    [0., 0., 0., 1.]])
-
-        T_offset = np.array([[-1, 0, 0., 0],
-                             [0, -1., 0., 0],
-                             [0, 0, 1., 0],
-                             [0, 0, 0., 1.]])
-
-        franka.set_T_base(T_base_mimicgen)
+        eePose_obs = np.concatenate([eePose_obs[1:, :], eePose_obs[-1:, :]], axis=0)
 
         eePose_franka = []
 
         for i in range(JP_actions.shape[0]):
-            theta = JP_actions[i]
-            if len(theta) == 7:
-                theta = np.hstack([theta, 1])
-            eePose_JP_actions = franka.theta2PosQuat(theta).squeeze()
-            T_JP_actions = PosQuat2HT(eePose_JP_actions) @ T_offset
+            theta = torch.from_numpy(JP_actions[i]).to(torch.float32)
+            T_JP_actions = franka.theta2HT(theta, apply_offset=True)
+            eePose_JP_actions = HT2PosQuat(T_JP_actions)
+            eePose_franka.append(eePose_JP_actions)
+
+        eePose_franka = np.array(eePose_franka)
+
+        compare_two_trajectories(eePose_obs, eePose_franka, 'eePose_obs', 'eePose_franka')
+
+
+def validate_JP_x0loss(path='data/robomimic/datasets/stack_d1/stack_d1_abs_JP_x0loss.hdf5'):
+    T_base_mimicgen = torch.tensor([[1., 0, 0, -0.561],
+                                    [0, 1., 0., 0],
+                                    [0, 0., 1., 0.925],
+                                    [0., 0., 0., 1.]])
+
+    T_offset = torch.tensor([[-1, 0, 0., 0],
+                             [0, -1., 0., 0],
+                             [0, 0, 1., 0],
+                             [0, 0, 0., 1.]])
+
+    franka = FrankaEmikaPanda_torch()
+    franka.set_T_base(T_base_mimicgen)
+    franka.set_T_offset(T_offset)
+
+    with h5py.File(path, 'r') as f:
+        demo0 = f['data/demo_0']
+        actions = deepcopy(demo0['actions'][...])
+        JP_actions = actions[:, :-1]
+        pos_ee = deepcopy(demo0['obs']['robot0_eef_pos'][...])
+        quat_ee = deepcopy(demo0['obs']['robot0_eef_quat'][...])
+
+        eePose_obs = np.concatenate([pos_ee, quat_ee], axis=-1)
+
+        eePose_franka = []
+
+        for i in range(JP_actions.shape[0]):
+            theta = torch.from_numpy(JP_actions[i]).to(torch.float32)
+
+            T_JP_actions = franka.theta2HT(theta, apply_offset=True)
 
             eePose_JP_actions = HT2PosQuat(T_JP_actions)
             eePose_franka.append(eePose_JP_actions)
 
         eePose_franka = np.array(eePose_franka)
+
         compare_two_trajectories(eePose_obs, eePose_franka)
 
 
 if __name__ == '__main__':
     # show_eePose_action_with_obs('/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_voxel_abs_test.hdf5')
-    # validate_JP_actions('/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5')
-
+    validate_JP_actions('/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP.hdf5')
     pass
