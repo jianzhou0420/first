@@ -48,7 +48,7 @@ class Validator:
     @staticmethod
     def get_shape_meta(dataset_path, env_meta):
         if 'JP' in dataset_path:
-            env_meta['env_kwargs']['controller_configs']['kp'] = 150
+            # env_meta['env_kwargs']['controller_configs']['kp'] = 150
             shape_meta = {
                 "obs": {
                     "agentview_image": {
@@ -215,6 +215,7 @@ class Validator:
             if i * n_action_steps >= len(actions):
                 break
             action = actions[i * (n_action_steps):i * (n_action_steps) + n_action_steps]
+
             obs, reward, done, info = test_env.step(action)
 
         # for i in tqdm(range(len(actions) // 1 + 1)):

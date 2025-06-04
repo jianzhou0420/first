@@ -85,6 +85,8 @@ class RobomimicImageRunner(BaseImageRunner):
         if abs_action:
             env_meta['env_kwargs']['controller_configs']['control_delta'] = False
 
+        env_meta['env_kwargs']['controller_configs']['kp'] = 150
+
         def env_fn():
             robomimic_env = create_env(
                 env_meta=env_meta,

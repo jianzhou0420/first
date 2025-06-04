@@ -17,7 +17,6 @@ from omegaconf import OmegaConf
 from equi_diffpo.common.pytorch_util import dict_apply
 from equi_diffpo.dataset.base_dataset import BaseImageDataset, LinearNormalizer
 from equi_diffpo.model.common.normalizer import LinearNormalizer, SingleFieldLinearNormalizer
-from equi_diffpo.model.common.rotation_transformer import RotationTransformer
 from equi_diffpo.codecs.imagecodecs_numcodecs import register_codecs, Jpeg2k
 from equi_diffpo.common.replay_buffer import ReplayBuffer
 from equi_diffpo.common.sampler import SequenceSampler, get_val_mask
@@ -44,7 +43,6 @@ class RobomimicReplayImageDataset_JP(BaseImageDataset):
                  pad_after=0,
                  n_obs_steps=None,
                  abs_action=False,
-                 rotation_rep='rotation_6d',  # ignored when abs_action=False
                  use_legacy_normalizer=False,
                  use_cache=False,
                  seed=42,
@@ -52,8 +50,6 @@ class RobomimicReplayImageDataset_JP(BaseImageDataset):
                  n_demo=100
                  ):
         self.n_demo = n_demo
-        rotation_transformer = RotationTransformer(
-            from_rep='axis_angle', to_rep=rotation_rep)
 
         replay_buffer = None
         if use_cache:
@@ -71,7 +67,7 @@ class RobomimicReplayImageDataset_JP(BaseImageDataset):
                             shape_meta=shape_meta,
                             dataset_path=dataset_path,
                             abs_action=abs_action,
-                            rotation_transformer=rotation_transformer,
+
                             n_demo=n_demo)
                         print('Saving cache to disk.')
                         with zarr.ZipStore(cache_zarr_path) as zip_store:
@@ -93,7 +89,6 @@ class RobomimicReplayImageDataset_JP(BaseImageDataset):
                 shape_meta=shape_meta,
                 dataset_path=dataset_path,
                 abs_action=abs_action,
-                rotation_transformer=rotation_transformer,
                 n_demo=n_demo)
 
         rgb_keys = list()
@@ -157,19 +152,21 @@ class RobomimicReplayImageDataset_JP(BaseImageDataset):
         normalizer = LinearNormalizer()
 
         # action
-        stat = array_to_stats(self.replay_buffer['action'])
-        if self.abs_action:
-            if stat['mean'].shape[-1] > 10:
-                # dual arm
-                this_normalizer = robomimic_abs_action_only_dual_arm_normalizer_from_stat(stat)
-            else:
-                this_normalizer = robomimic_abs_action_only_normalizer_from_stat(stat)
+        stat = array_to_stats(self.replay_buffer['action'])  # abs_action 没用了
+        # if self.abs_action:
+        #     if stat['mean'].shape[-1] > 10:
+        #         # dual arm
+        #         this_normalizer = robomimic_abs_action_only_dual_arm_normalizer_from_stat(stat)
+        #     else:
+        #         this_normalizer = robomimic_abs_action_only_normalizer_from_stat(stat)
 
-            if self.use_legacy_normalizer:
-                this_normalizer = normalizer_from_stat(stat)
-        else:
-            # already normalized
-            this_normalizer = get_identity_normalizer_from_stat(stat)
+        #     if self.use_legacy_normalizer:
+        #         this_normalizer = normalizer_from_stat(stat)
+        # else:
+        #     # already normalized
+        #     this_normalizer = get_identity_normalizer_from_stat(stat)
+        this_normalizer = get_range_normalizer_from_stat(stat)
+
         normalizer['action'] = this_normalizer
 
         # obs
@@ -225,6 +222,10 @@ class RobomimicReplayImageDataset_JP(BaseImageDataset):
             'obs': dict_apply(obs_dict, torch.from_numpy),
             'action': torch.from_numpy(data['action'].astype(np.float32))
         }
+        # # debug
+        # print('debugging')
+        # for i in range(len(data['action'])):
+        #     print('action', i, torch_data['action'][i])
         return torch_data
 
 
@@ -251,7 +252,7 @@ def _convert_actions(raw_actions, abs_action, rotation_transformer):
     return actions
 
 
-def _convert_robomimic_to_replay(store, shape_meta, dataset_path, abs_action, rotation_transformer,
+def _convert_robomimic_to_replay(store, shape_meta, dataset_path, abs_action,
                                  n_workers=None, max_inflight_tasks=None, n_demo=100):
     if n_workers is None:
         n_workers = multiprocessing.cpu_count()

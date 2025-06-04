@@ -28,7 +28,9 @@
                 "task.env_runner.n_test=1",
                 "logging.project=ProjectFirst_Debug",
                 "logging.name=Train_ACT_JP_EELoss",
-                "logging.mode=offline"
+                "logging.mode=offline",
+                "dataloader.num_workers=1",
+                "val_dataloader.num_workers=1"
             ],
             "envFile": "${workspaceFolder}/.vscode/.env"
         },
@@ -47,7 +49,30 @@
                 "task.env_runner.n_test=1",
                 "logging.project=ProjectFirst_Debug",
                 "logging.name=Train_DP_Unet",
-                "logging.mode=offline"
+                "logging.mode=offline",
+                "dataloader.num_workers=1",
+                "val_dataloader.num_workers=1"
+            ],
+            "envFile": "${workspaceFolder}/.vscode/.env"
+        },
+        {
+            "name": "Train DP Unet JP",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config-name=train_diffusion_unet_JP",
+                "task_name=stack_d1",
+                "n_demo=10",
+                "task.env_runner.n_envs=2",
+                "task.env_runner.n_train=1",
+                "task.env_runner.n_test=1",
+                "logging.project=ProjectFirst_Debug",
+                "logging.name=Train_DP_Unet",
+                "logging.mode=offline",
+                "dataloader.num_workers=1",
+                "val_dataloader.num_workers=1"
             ],
             "envFile": "${workspaceFolder}/.vscode/.env"
         },
@@ -66,7 +91,9 @@
                 "task.env_runner.n_test=1",
                 "logging.project=ProjectFirst_Debug",
                 "logging.name=Train_General",
-                "logging.mode=offline"
+                "logging.mode=offline",
+                "dataloader.num_workers=1",
+                "val_dataloader.num_workers=1"
             ],
             "envFile": "${workspaceFolder}/.vscode/.env"
         },
