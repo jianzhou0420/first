@@ -27,3 +27,7 @@ dist/
 
 *.mp4
 *.class
+
+wandb
+
+diffusion_policy_stack_d1

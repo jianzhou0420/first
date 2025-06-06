@@ -120,7 +120,7 @@ class DebugPolicyCreator:
         )
         policy.eval()
 
-        from equi_diffpo.dataset.robomimic_replay_image_dataset_tmp import RobomimicReplayImageDataset
+        from equi_diffpo.dataset.robomimic_replay_image_dataset_states_eePose import RobomimicReplayImageDataset
 
         # configure dataset
         dataset = RobomimicReplayImageDataset(

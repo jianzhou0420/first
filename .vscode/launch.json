@@ -98,6 +98,27 @@
             "envFile": "${workspaceFolder}/.vscode/.env"
         },
         {
+            "name": "Train pl debug",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/trainer_pl.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config-name=train_diffusion_unet",
+                "task_name=stack_d1",
+                "n_demo=10",
+                "task.env_runner.n_envs=2",
+                "task.env_runner.n_train=1",
+                "task.env_runner.n_test=1",
+                "logging.project=ProjectFirst_Debug",
+                "logging.name=Train_DP_Unet",
+                "logging.mode=online",
+                "dataloader.num_workers=1",
+                "val_dataloader.num_workers=1"
+            ],
+            "envFile": "${workspaceFolder}/.vscode/.env"
+        },
+        {
             "name": "OnlineEval",
             "type": "debugpy",
             "request": "launch",

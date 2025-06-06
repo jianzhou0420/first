@@ -71,6 +71,9 @@ class DatasetGeneral(Dataset):
         self.low = self.JOINT_POSITION_LIMITS[0]
         self.high = self.JOINT_POSITION_LIMITS[1]
 
+    def get_normalizer(self,):
+        pass
+
     def __len__(self):
         return self.config['Dataset']['length']
 

@@ -135,7 +135,7 @@ class DatasetConvertor:
         pure_lowdim_path = original_path.replace('.hdf5', '_pure_lowdim_traj_eePose.hdf5')
         cprint(f"Converting\n{original_path}\nto{pure_lowdim_path}\n", 'blue')
         self._copy2new_h5py_file(original_path, pure_lowdim_path)
-
+        self._controller_type_to_JP(pure_lowdim_path)
         # change_controller_type(JP_h5py_file)
         with h5py.File(pure_lowdim_path, 'r+') as f:
             data = f['data']
@@ -175,9 +175,43 @@ class DatasetConvertor:
 
                 obs_group.create_dataset('states', data=states, dtype='f8')
 
+    def pure_lowdim_JP(self, original_path: str):
+        pure_lowdim_path = original_path.replace('.hdf5', '_pure_lowdim_traj_JP.hdf5')
+        cprint(f"Converting\n{original_path}\nto{pure_lowdim_path}\n", 'blue')
+        self._copy2new_h5py_file(original_path, pure_lowdim_path)
+
+        # change_controller_type(JP_h5py_file)
+        with h5py.File(pure_lowdim_path, 'r+') as f:
+            data = f['data']
+            for i, key in enumerate(data.keys()):
+                # 1. get a numpy copy of the dataset
+                demo_data = data[key]
+                action_data = deepcopy(demo_data['actions'][...])
+                JP_all = deepcopy(demo_data['obs']['robot0_joint_pos'][...])
+
+                open_action = action_data[:, -1:]  # open action at t
+                JP_all_new = np.concatenate((JP_all[1:, :], JP_all[-1:, :]), axis=0)
+                JPOpen_all_new = np.concatenate((JP_all_new, open_action), axis=-1)
+                del demo_data['actions']
+                demo_data['actions'] = JPOpen_all_new
+
+            for i, key in enumerate(data.keys()):
+                # delete all obs
+                # make states to be the only obs
+                demo_data = data[key]
+                states = deepcopy(demo_data['states'][...])
+                obs_group = demo_data['obs']
+
+                for name, obj in list(obs_group.items()):
+                    if isinstance(obj, h5py.Dataset) and name != 'agentview_image':
+                        del obs_group[name]
+
+                obs_group.create_dataset('states', data=states, dtype='f8')
+
     ################
     # private method
     ################
+
     @staticmethod
     def _copy2new_h5py_file(src_path, dst_path):
         with h5py.File(src_path, 'r') as src, h5py.File(dst_path, 'w') as dst:
@@ -236,4 +270,4 @@ if __name__ == '__main__':
     # convertor.traj_eePose('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
     # convertor.traj_JP('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
     # convertor.traj_JP_eeloss('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
-    convertor.pure_lowdim_eePose('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
+    convertor.pure_lowdim_JP('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')

@@ -87,7 +87,7 @@ training:
   device: "cuda:0"
   seed: 0
   debug: False
-  resume: True
+  resume: False
   # optimization
   lr_scheduler: cosine
   lr_warmup_steps: 500
@@ -98,8 +98,8 @@ training:
   use_ema: True
   # training loop control
   # in epochs
-  rollout_every: ${eval:'1000 / ${n_demo}'}
-  checkpoint_every: ${eval:'1000 / ${n_demo}'}
+  rollout_every: ${eval:'50000 / ${n_demo} /50'}
+  checkpoint_every: ${eval:'50000 / ${n_demo} /50'}
   val_every: 1
   sample_every: 5
   # steps per epoch
@@ -110,7 +110,7 @@ training:
 
 logging:
   project: diffusion_policy_${task_name}
-  resume: True
+  resume: False
   mode: online
   name: diff_c_demo${n_demo}
   tags: ["${name}", "${task_name}", "${exp_name}"]

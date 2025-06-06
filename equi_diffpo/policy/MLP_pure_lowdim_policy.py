@@ -44,7 +44,7 @@ class SingleHeadMLP(nn.Module):
             nn.ReLU(),
             nn.Linear(32, 16),
             nn.ReLU(),
-            nn.Linear(16, 10)  # Assuming the output is a 6D vector (e.g., rotation)
+            nn.Linear(16, 8)  # Assuming the output is a 6D vector (e.g., rotation)
         )
 
     def forward(self, x):
