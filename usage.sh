@@ -11,3 +11,6 @@ python equi_diffpo/scripts/robomimic_dataset_conversion.py -i data/robomimic/dat
 # train
 
 python train.py --config-name=train_diffusion_unet_JP task_name=stack_d1 n_demo=100
+
+# debug args
+logging.mode=offline task.env_runner.n_train=1 task.env_runner.n_test=1 task.env_runner.n_envs=2

@@ -180,6 +180,8 @@ class RobomimicReplayImageDataset(BaseImageDataset):
                 this_normalizer = get_identity_normalizer_from_stat(stat)
             elif key.endswith('qpos'):
                 this_normalizer = get_range_normalizer_from_stat(stat)
+            elif key.endswith('JPOpen'):
+                this_normalizer = get_range_normalizer_from_stat(stat)
             else:
                 raise RuntimeError('unsupported')
             normalizer[key] = this_normalizer

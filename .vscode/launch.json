@@ -119,6 +119,28 @@
             "envFile": "${workspaceFolder}/.vscode/.env"
         },
         {
+            "name": "Train pl_JP2ee debug",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/trainer_pl.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config-name=train_diffusion_unet_JP2eePose",
+                "task_name=stack_d1",
+                "n_demo=10",
+                "task.env_runner.n_envs=2",
+                "task.env_runner.n_train=1",
+                "task.env_runner.n_test=1",
+                "logging.project=ProjectFirst_Debug",
+                "logging.name=Train_DP_Unet",
+                "logging.mode=online",
+                "dataloader.num_workers=1",
+                "val_dataloader.num_workers=1",
+                "task.dataset.dataset_path=/media/jian/ssd4t/DP/first/data/robomimic/datasets/stack_d1/stack_d1_abs_JP2eePose_degbug.hdf5"
+            ],
+            "envFile": "${workspaceFolder}/.vscode/.env"
+        },
+        {
             "name": "OnlineEval",
             "type": "debugpy",
             "request": "launch",
