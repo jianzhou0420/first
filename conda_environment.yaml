@@ -50,6 +50,7 @@ dependencies:
   - llvm-openmp=14
   # trick to force reinstall imagecodecs via pip
   - imagecodecs==2022.8.8
+
   - pip:
     - open3d
     - wandb==0.17.0
