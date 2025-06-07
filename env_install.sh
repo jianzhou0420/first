@@ -3,7 +3,7 @@
 set -e
 
 echo "--- 1. Creating and activating conda environment ---"
-mamba env create -fy conda_environment.yaml
+mamba env create -f conda_environment.yaml -y
 # Note: In a script, `source` or `conda` is often needed to make activate work
 # This part might need adjustment depending on your shell's configuration.
 # For simplicity, we assume activation works or you run the rest in the activated env.
