@@ -387,8 +387,8 @@ class DatasetConvertor:
 
 if __name__ == '__main__':
     convertor = DatasetConvertor()
-    # convertor.traj_eePose('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
+    convertor.traj_eePose('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
     # convertor.traj_JP('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
     # convertor.traj_JP_eeloss('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
     # convertor.pure_lowdim_JP('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
-    convertor.JP2eePose_debug('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')
+    # convertor.JP2eePose_debug('data/robomimic/datasets/stack_d1/stack_d1_abs.hdf5')

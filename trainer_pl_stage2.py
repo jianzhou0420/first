@@ -63,13 +63,93 @@ torch.set_float32_matmul_precision('medium')
 # region 1. Trainer
 
 
+def load_pretrained_weights(model, ckpt_path):
+
+    pretrained_dict = torch.load(ckpt_path, map_location='cpu')['state_dict']
+    new_model_dict = model.state_dict()
+
+    loadable_keys = set()
+    filtered_dict = {}
+    # --------------------------------------------------------------------------
+    # 第1步：识别出可以安全加载的权重
+    # --------------------------------------------------------------------------
+
+    print("正在筛选兼容的权重...")
+
+    for k, v in pretrained_dict.items():
+        if k in new_model_dict and new_model_dict[k].shape == v.shape:
+            # 如果键名存在且形状匹配，则将其加入待加载字典和键名集合
+            filtered_dict[k] = v
+            loadable_keys.add(k)
+    print(f"识别出 {len(loadable_keys)} 个参数可以从 checkpoint 安全加载。")
+
+    # --------------------------------------------------------------------------
+    # 第2步：加载筛选后的权重
+    # --------------------------------------------------------------------------
+    # 使用筛选后的字典来更新新模型的权重字典
+    new_model_dict.update(filtered_dict)
+    # 加载这个完美匹配的字典
+    model.load_state_dict(new_model_dict)
+    print("已成功加载所有兼容的权重。")
+    # --------------------------------------------------------------------------
+    # 第3步：根据加载情况设置梯度
+    # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
+    # 第3步（已修正）：根据加载情况智能地设置梯度
+    # --------------------------------------------------------------------------
+
+    print("正在智能地设置参数的梯度计算状态...")
+    trainable_params = 0
+    frozen_params = 0
+
+    for name, param in model.named_parameters():
+        # 默认假定参数是可加载和可冻结的
+        is_loadable_and_should_be_frozen = name in loadable_keys
+
+        # ✨ 智能逻辑的核心：检查偏置对应的权重是否也被加载了
+        if name.endswith('.bias'):
+            # 找到对应权重的名字
+            weight_name = name.replace('.bias', '.weight')
+            if weight_name not in loadable_keys:
+                # 如果权重没有被加载，那么即使偏置本身是兼容的，我们也不应该冻结它
+                is_loadable_and_should_be_frozen = False
+                print(f"ℹ️  注意: 偏置 '{name}' 将保持可训练，因为其对应的权重 '{weight_name}' 未被加载。")
+
+        # 根据最终判断来设置梯度
+        if is_loadable_and_should_be_frozen:
+            param.requires_grad = False
+            frozen_params += 1
+        else:
+            param.requires_grad = True
+            trainable_params += 1
+
+    print(f"策略执行完毕：{frozen_params} 个参数被加载并冻结，{trainable_params} 个参数保持可训练。")
+
+    # --------------------------------------------------------------------------
+    # 第4步：最终验证（代码不变）
+    # --------------------------------------------------------------------------
+    print("\n--- 最终模型梯度状态验证 ---")
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(f"✅ [可训练] {name}")
+        else:
+            print(f"🧊 [已冻结] {name}")
+    print("---------------------------------")
+
+    return model
+
+
 class Trainer_all(pl.LightningModule):
     def __init__(self, cfg):
         super().__init__()
         self.save_hyperparameters()
         self.cfg = cfg
+        ckpt_path = cfg.ckpt_path
         policy: DiffusionUnetHybridImagePolicy = hydra.utils.instantiate(cfg.policy)
-        policy_ema: DiffusionUnetHybridImagePolicy = copy.deepcopy(policy)
+
+        cprint("test", "red", attrs=['bold'])
+        policy = load_pretrained_weights(policy, ckpt_path)
+        policy_ema = copy.deepcopy(policy)
 
         if cfg.training.use_ema:
             ema_handler: EMAModel = hydra.utils.instantiate(
@@ -90,6 +170,15 @@ class Trainer_all(pl.LightningModule):
         return
 
     def training_step(self, batch):
+        # model = self.policy
+        # print("\n--- 最终模型梯度状态验证 ---")
+        # for name, param in model.named_parameters():
+        #     if param.requires_grad:
+        #         print(f"✅ [可训练] {name}")
+        #     else:
+        #         print(f"🧊 [已冻结] {name}")
+        # print("---------------------------------")
+
         if self.train_sampling_batch is None:
             self.train_sampling_batch = batch
 
@@ -219,10 +308,12 @@ class RolloutCallback(pl.Callback):
         """
 
         # Ensure we only run this every N epochs
-        if (trainer.current_epoch) + 1 % self.rollout_every_n_epochs != 0:
-            return
+        # if (trainer.current_epoch) % self.rollout_every_n_epochs != 0:
+        #     return
         runner_log = self.env_runner.run(pl_module.policy_ema)
         trainer.logger.experiment.log(runner_log, step=trainer.global_step)
+
+# region ActionMseLossForDiffusion
 
 
 class ActionMseLossForDiffusion(pl.Callback):
@@ -288,7 +379,7 @@ def train(cfg: AppConfig):
     )
 
     trainer = pl.Trainer(callbacks=[checkpoint_callback,
-                                    # RolloutCallback(cfg),
+                                    RolloutCallback(cfg),
                                     ActionMseLossForDiffusion(cfg),
                                     ],
                          max_epochs=int(cfg.training.num_epochs),

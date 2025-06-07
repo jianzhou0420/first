@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - task: mimicgen_abs_JP2eePose
+  - task: mimicgen_abs_JP2eePose_stage2
 
 name: diff_c
 _target_: equi_diffpo.workspace.train_diffusion_unet_hybrid_workspace.TrainDiffusionUnetHybridWorkspace
@@ -11,14 +11,14 @@ exp_name: "default"
 task_name: stack_d1
 n_demo: 200
 horizon: 16
-n_obs_steps: 16
-n_action_steps: 16
-n_latency_steps: -15
+n_obs_steps: 2
+n_action_steps: 8
+n_latency_steps: 0
 dataset_obs_steps: ${n_obs_steps}
 past_action_visible: False
 obs_as_global_cond: True
 dataset: equi_diffpo.dataset.robomimic_replay_image_dataset.RobomimicReplayImageDataset
-dataset_path: data/robomimic/datasets/${task_name}/${task_name}_abs_JP2eePose.hdf5
+dataset_path: data/robomimic/datasets/${task_name}/${task_name}_abs_traj_eePose.hdf5
 ckpt_path: /media/jian/ssd4t/DP/first/data/outputs/Jun06_22-09-56_my_model/checkpoint_epoch=033.ckpt
 policy:
   _target_: equi_diffpo.policy.diffusion_unet_hybrid_image_policy.DiffusionUnetHybridImagePolicy
@@ -90,7 +90,7 @@ training:
   resume: False
   # optimization
   lr_scheduler: cosine
-  lr_warmup_steps: 500
+  lr_warmup_steps: 0
   num_epochs: ${eval:'50000 / ${n_demo}'}
   gradient_accumulate_every: 1
   # EMA destroys performance when used with BatchNorm
@@ -98,8 +98,8 @@ training:
   use_ema: True
   # training loop control
   # in epochs
-  rollout_every: ${eval:'50000 / ${n_demo} /50'}
-  checkpoint_every: ${eval:'50000 / ${n_demo} /50'}
+  rollout_every: 1
+  checkpoint_every: 1
   val_every: 1
   sample_every: 5
   # steps per epoch
@@ -112,7 +112,7 @@ logging:
   project: pretrain_from_JPee_pair
   resume: False
   mode: online
-  name: pretrain_JPee_stage1
+  name: pretrain_JPee_stage2
   tags: ["${name}", "${task_name}", "${exp_name}"]
   id: null
   group: null
